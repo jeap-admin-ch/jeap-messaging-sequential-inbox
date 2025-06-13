@@ -21,7 +21,7 @@ Apache License Version 2.0
  * ch.admin.bit.jeap:jeap-messaging-infrastructure-kafka - [ch.admin.bit.jeap:jeap-messaging-infrastructure-kafka](https://github.com/jeap-admin-ch/jeap-messaging/tree/main/jeap-messaging-infrastructure-kafka)
  * ch.admin.bit.jeap:jeap-messaging-infrastructure-kafka-test - [ch.admin.bit.jeap:jeap-messaging-infrastructure-kafka-test](https://github.com/jeap-admin-ch/jeap-messaging/tree/main/jeap-messaging-infrastructure-kafka-test)
  * ch.admin.bit.jeap:jeap-messaging-model - [ch.admin.bit.jeap:jeap-messaging-model](https://github.com/jeap-admin-ch/jeap-messaging/tree/main/jeap-messaging-model)
- * ch.admin.bit.jeap:jeap-messaging-sequential-inbox - [ch.admin.bit.jeap:jeap-messaging-sequential-inbox](https://github.com/jeap-admin-ch/jeap-messaging/tree/main/jeap-messaging-sequential-inbox)
+ * ch.admin.bit.jeap:jeap-messaging-sequential-inbox - [ch.admin.bit.jeap:jeap-messaging-sequential-inbox](https://github.com/jeap-admin-ch/jeap-messaging-sequential-inbox/tree/main/jeap-messaging-sequential-inbox)
  * jme-declaration-created-event - [ch.admin.bit.jeap.messaging.test.messagetype.jme:jme-declaration-created-event](https://github.com/jeap-admin-ch/jeap-test-message-type-registry/tree/main)
  * jme-enum-test-event - [ch.admin.bit.jeap.messaging.test.messagetype.jme:jme-enum-test-event](https://github.com/jeap-admin-ch/jeap-test-message-type-registry/tree/main)
  * jme-messaging-common - [ch.admin.bit.jeap.messaging.test.messagetype.jme:jme-messaging-common](https://github.com/jeap-admin-ch/jeap-test-message-type-registry/tree/main)
