@@ -92,14 +92,14 @@ class SequentialInboxSignatureIT extends SequentialInboxITBase {
         bufferedEvent.getPayload().setMessage(DeclarationCreatedEventListener.FAILURE);
         AvroMessageKey key = createKey();
         // when: sending the event
-        sendSync(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, bufferedEvent);
+        sendSync(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, key, bufferedEvent);
         // then: assert that the event was consumed by the message listener
         assertSequenceState(contextId.toString(), SequenceInstanceState.OPEN);
 
         // given: a predecessor event that will trigger the deferred processing
         JmeSimpleTestEvent predecessorEvent = createJmeSimpleTestEvent(contextId, "jme-messaging-receiverpublisher-outbox-service");
         // when: sending the event
-        sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, key, predecessorEvent);
+        sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, predecessorEvent);
 
         // then: assert that the message processing failed event contains the signature headers
         MessageProcessingFailedEvent mpfe = messageRecorder.getExactlyOneMessageProcessingFailedEvent();

@@ -1,6 +1,7 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.jpa;
 
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.BufferedMessage;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.MessageHeader;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessage;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessageState;
 import jakarta.persistence.EntityManager;
@@ -14,7 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toMap;
 
 @Repository
 @RequiredArgsConstructor
@@ -68,7 +70,6 @@ public class MessageRepository {
         return sequencedMessageRepository.findByMessageTypeAndIdempotenceId(messageType, idempotenceId);
     }
 
-
     /**
      * Deletes all buffered messages, message headers and sequenced messages associated with
      * sequence instances whose retention period has elapsed (retain_until < cutoffTime).
@@ -97,6 +98,16 @@ public class MessageRepository {
     @Transactional(propagation = Propagation.MANDATORY)
     public Map<String, Double> getWaitingMessageCountByType() {
         return sequencedMessageRepository.getWaitingMessageCountGroupedByMessageType().stream()
-                .collect(Collectors.toMap(CountByType::messageType, CountByType::waitingCount));
+                .collect(toMap(CountByType::messageType, CountByType::waitingCount));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public Map<String, byte[]> getHeaders(SequencedMessage sequencedMessage) {
+        List<MessageHeader> headers = messageHeaderRepository.getHeadersForSequencedMessageId(sequencedMessage.getId());
+        if (headers == null || headers.isEmpty()) {
+            return Map.of();
+        }
+        return headers.stream()
+                .collect(toMap(MessageHeader::getHeaderName, MessageHeader::getHeaderValue));
     }
 }

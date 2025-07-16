@@ -27,7 +27,7 @@
 
     <artifactId>jeap-messaging-sequential-inbox-parent</artifactId>
     <name>${project.groupId}:${project.artifactId}</name>
-    <version>8.50.3-SNAPSHOT</version>
+    <version>8.50.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>

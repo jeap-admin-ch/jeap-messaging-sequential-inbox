@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Repository
 interface SpringDataJpaMessageHeaderRepository extends JpaRepository<MessageHeader, Long> {
@@ -21,4 +22,6 @@ interface SpringDataJpaMessageHeaderRepository extends JpaRepository<MessageHead
             "SELECT bm.id FROM buffered_message bm join sequence_instance si on bm.sequence_instance_id = si.id WHERE si.state = 'CLOSED')")
     void deleteForClosedSequences();
 
+    @Query("SELECT mh FROM MessageHeader mh WHERE mh.bufferedMessage.sequencedMessageId = :sequencedMessageId")
+    List<MessageHeader> getHeadersForSequencedMessageId(Long sequencedMessageId);
 }
