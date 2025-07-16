@@ -18,10 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -92,7 +89,9 @@ class BufferedMessageService {
                 messageRepository.setMessageStateInNewTransaction(sequencedMessage, SequencedMessageState.PROCESSED);
                 log.debug("Processed buffered message {}", sequencedMessage);
             } catch (Exception ex) {
-                FailedConsumerRecord failedConsumerRecord = FailedConsumerRecord.of(sequencedMessage, deserializedMessage.get().key(), deserializedMessage.get().message());
+                Map<String, byte[]> headers = messageRepository.getHeaders(sequencedMessage);
+                FailedConsumerRecord failedConsumerRecord = FailedConsumerRecord.of(
+                        sequencedMessage, headers, deserializedMessage.get().key(), deserializedMessage.get().message());
                 sendMessageToErrorHandlerAndMarkFailed(sequencedMessage, ex, failedConsumerRecord);
                 return false;
             }
@@ -114,17 +113,16 @@ class BufferedMessageService {
         DeserializedMessage deserializedMessage;
         try {
             deserializedMessage = inboxDeserializer.deserialize(sequencedMessage, bufferedMessage);
-
         } catch (Exception ex) {
             // Exception while deserializing - pass raw serialized bytes to the MessageProcessingFailedEventBuilder
-            FailedConsumerRecord failedConsumerRecord = FailedConsumerRecord.of(sequencedMessage, bufferedMessage);
+            FailedConsumerRecord failedConsumerRecord = FailedConsumerRecord.of(sequencedMessage, bufferedMessage.getHeaderMap(), bufferedMessage);
             sendMessageToErrorHandlerAndMarkFailed(sequencedMessage, ex, failedConsumerRecord);
             return Optional.empty();
         }
         if (deserializedMessage.deserializationFailed()) {
             sendMessageToErrorHandlerAndMarkFailed(sequencedMessage,
                     SequentialInboxException.deserializationFailed(sequencedMessage),
-                    FailedConsumerRecord.of(sequencedMessage, deserializedMessage));
+                    FailedConsumerRecord.of(sequencedMessage, bufferedMessage.getHeaderMap(), deserializedMessage));
             return Optional.empty();
         }
         return Optional.of(deserializedMessage);

@@ -34,6 +34,7 @@ class SequentialInboxDeserializer {
 
         AvroMessageKey key = Deserializers.deserialize(keyDeserializer, topic, bufferedMessage.getKey(), Collections.emptyList(), true);
         AvroMessage value = Deserializers.deserialize(valueDeserializer, topic, bufferedMessage.getValue(), bufferedMessage.getHeaders(), false);
+
         return new DeserializedMessage(key, value, topic);
     }
 

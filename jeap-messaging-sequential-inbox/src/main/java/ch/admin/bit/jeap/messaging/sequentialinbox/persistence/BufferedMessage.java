@@ -5,8 +5,10 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
+import static java.util.stream.Collectors.toMap;
 import static lombok.AccessLevel.PROTECTED;
 
 @NoArgsConstructor(access = PROTECTED) // for JPA
@@ -50,6 +52,14 @@ public class BufferedMessage {
 
     public void setHeaders(List<MessageHeader> headers) {
         this.headers.addAll(headers);
+    }
+
+    public Map<String, byte[]> getHeaderMap() {
+        if (headers == null || headers.isEmpty()) {
+            return Map.of();
+        }
+        return headers.stream()
+                .collect(toMap(MessageHeader::getHeaderName, MessageHeader::getHeaderValue));
     }
 
     @Override

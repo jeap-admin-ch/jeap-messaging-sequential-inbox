@@ -16,10 +16,12 @@ import org.springframework.test.context.transaction.TestTransaction;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -50,6 +52,7 @@ class MessageRepositoryTest {
 
     @AfterEach
     void tearDown() {
+        jdbcTemplate.execute("delete from message_header");
         jdbcTemplate.execute("delete from buffered_message");
         jdbcTemplate.execute("delete from sequenced_message");
         jdbcTemplate.execute("delete from sequence_instance");
@@ -169,13 +172,30 @@ class MessageRepositoryTest {
                 .value(new byte[]{4, 5, 6})
                 .sequenceInstanceId(sequenceInstanceId)
                 .build();
+        bufferedMessage.setHeaders(List.of(
+                MessageHeader.builder()
+                        .bufferedMessage(bufferedMessage)
+                        .headerName("name")
+                        .headerValue("value".getBytes(UTF_8))
+                        .build()
+        ));
         messageRepository.saveMessage(bufferedMessage, sequencedMessage);
         TestTransaction.flagForCommit();
         TestTransaction.end();
 
+        TestTransaction.start();
         BufferedMessage result = messageRepository.getBufferedMessageInNewTransaction(sequencedMessage);
 
         assertThat(result).isEqualTo(bufferedMessage);
+        assertThat(result.getHeaderMap())
+                .hasSize(1)
+                .containsEntry("name", "value".getBytes(UTF_8));
+
+        Map<String, byte[]> headers = messageRepository.getHeaders(sequencedMessage);
+        assertThat(headers)
+                .hasSize(1)
+                .containsEntry("name", "value".getBytes(StandardCharsets.UTF_8));
+        TestTransaction.end();
     }
 
     @Test
