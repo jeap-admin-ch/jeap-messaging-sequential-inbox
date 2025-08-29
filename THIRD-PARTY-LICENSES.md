@@ -25,7 +25,7 @@ Apache License Version 2.0
  * ch.admin.bit.jeap:jeap-spring-boot-roles-anywhere-starter - [ch.admin.bit.jeap:jeap-spring-boot-roles-anywhere-starter](https://github.com/jeap-admin-ch/jeap-spring-boot-roles-anywhere-starter/tree/main/jeap-spring-boot-roles-anywhere-starter)
  * jme-declaration-created-event - [ch.admin.bit.jeap.messaging.test.messagetype.jme:jme-declaration-created-event](https://github.com/jeap-admin-ch/jeap-test-message-type-registry/tree/main)
  * jme-enum-test-event - [ch.admin.bit.jeap.messaging.test.messagetype.jme:jme-enum-test-event](https://github.com/jeap-admin-ch/jeap-test-message-type-registry/tree/main)
- * jme-messaging-common - [ch.admin.bit.jeap.messaging.test.messagetype.jme:jme-messaging-common](https://github.com/jeap-admin-ch/jeap-test-message-type-registry/tree/main)
+ * ch.admin.bit.jeap.messaging.test.messagetype.jme:jme-messaging-common - [ch.admin.bit.jeap.messaging.test.messagetype.jme:jme-messaging-common](https://github.com/jeap-admin-ch/jeap-test-message-type-registry/tree/main)
  * jme-simple-test-event - [ch.admin.bit.jeap.messaging.test.messagetype.jme:jme-simple-test-event](https://github.com/jeap-admin-ch/jeap-test-message-type-registry/tree/main)
  * AWS SDK for Java - Core - [com.amazonaws:aws-java-sdk-core](https://aws.amazon.com/sdkforjava)
  * AWS Java SDK for AWS STS - [com.amazonaws:aws-java-sdk-sts](https://aws.amazon.com/sdkforjava)
