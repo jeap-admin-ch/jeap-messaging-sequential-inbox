@@ -119,36 +119,42 @@ class SequentialInboxListenerServiceTest {
     private static class ValidListener {
         @SequentialInboxMessageListener
         public void listener(AvroMessage message) {
+            // This is just a test listener, no implementation needed
         }
     }
 
     private static class ValidListenerWithKey {
         @SequentialInboxMessageListener
         public void listener(AvroMessageKey key, AvroMessage message) {
+            // This is just a test listener, no implementation needed
         }
     }
 
     private static class InvalidListener {
         @SequentialInboxMessageListener
         public void listener(Object foo) {
+            // This is just a test listener, no implementation needed
         }
     }
 
     private static class InvalidListenerArgs {
         @SequentialInboxMessageListener
         public void listener(AvroMessage message, AvroMessageKey key) {
+            // This is just a test listener, no implementation needed
         }
     }
 
     private static class InvalidListenerNoArgs {
         @SequentialInboxMessageListener
         public void listener() {
+            // This is just a test listener, no implementation needed
         }
     }
 
     private static class InvalidListenerExtraArgs {
         @SequentialInboxMessageListener
         public void listener(AvroMessageKey key, AvroMessage message, String foo) {
+            // This is just a test listener, no implementation needed
         }
     }
 }

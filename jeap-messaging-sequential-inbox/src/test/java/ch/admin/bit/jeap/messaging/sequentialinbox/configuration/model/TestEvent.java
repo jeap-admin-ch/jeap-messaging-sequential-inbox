@@ -9,7 +9,7 @@ import org.apache.avro.Schema;
 public class TestEvent implements AvroMessage {
     @Override
     public void setSerializedMessage(byte[] message) {
-
+        // This is just a test event, no implementation needed
     }
 
     @Override
