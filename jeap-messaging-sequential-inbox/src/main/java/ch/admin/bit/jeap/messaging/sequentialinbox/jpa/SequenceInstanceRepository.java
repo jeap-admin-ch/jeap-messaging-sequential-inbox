@@ -26,6 +26,7 @@ public class SequenceInstanceRepository {
                 sequenceInstance.getCreatedAt(), sequenceInstance.getRetainUntil());
     }
 
+    @SuppressWarnings("java:S2259")
     private long insertInstance(String name, String contextId, String state, ZonedDateTime createdAt, ZonedDateTime retainUntil) {
         SequenceInstancePreparedStatementCreator psc = new SequenceInstancePreparedStatementCreator(name, contextId, state, createdAt, retainUntil);
         //noinspection DataFlowIssue

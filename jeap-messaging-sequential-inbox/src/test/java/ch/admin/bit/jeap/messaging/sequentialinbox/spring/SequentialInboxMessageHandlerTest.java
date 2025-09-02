@@ -45,6 +45,7 @@ class SequentialInboxMessageHandlerTest {
 
     private static class DifferentClass {
         public void someMethod() {
+            // This is just a test class, no implementation needed
         }
     }
 
