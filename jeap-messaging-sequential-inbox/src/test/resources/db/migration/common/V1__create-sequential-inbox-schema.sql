@@ -1,4 +1,4 @@
-CREATE SEQUENCE sequence_instance_sequence START WITH 1 INCREMENT 1 CYCLE; -- sequence is not used via Hibernate, not caching 50 values
+CREATE SEQUENCE sequence_instance_sequence START WITH 1 INCREMENT 1 CYCLE;
 CREATE SEQUENCE buffered_message_sequence START WITH 1 INCREMENT 50 CYCLE;
 CREATE SEQUENCE sequenced_message_sequence START WITH 1 INCREMENT 50 CYCLE;
 
@@ -11,11 +11,14 @@ CREATE TABLE sequence_instance
     state        text                     not null,
     created_at   timestamp with time zone NOT NULL,
     closed_at    timestamp with time zone,
-    retain_until timestamp with time zone NOT NULL
+    retain_until timestamp with time zone NOT NULL,
+    remove_after timestamp with time zone
 );
 
 ALTER TABLE sequence_instance
     ADD CONSTRAINT SEQUENCE_INSTANCE_NAME_CONTEXT_ID_UK UNIQUE (name, context_id);
+
+CREATE INDEX idx_sequence_instance_remove_after ON sequence_instance(remove_after);
 
 CREATE TABLE sequenced_message
 (

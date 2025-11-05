@@ -18,8 +18,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   are marked for removal and retained for an additional interval (`jeap.messaging.sequential-inbox.housekeeping.delay`).
   This delay allows DevOps engineers time to resolve sequencing issues. After the interval, the inbox housekeeping
   process forwards the messages to the error handling service and then deletes them from the inbox. This version of
-  the inbox library is breaking because of a needed new field on the `inbox_sequence_instance` table. See the sequential
-  inbox documentation for details on how to perform the upgrade to version 10.0.0.
+  the inbox library is breaking because of a needed new field on the `inbox_sequence_instance` table. See the file
+  [./jeap-messaging-sequential-inbox-test/src/test/resources/db/migration/common/V2__add-remove-after-to-sequence.sql]
+  for a DDL script that performs the schema upgrade from version 9 to version 10.0.0. In addition, you have to explicitly
+  set the new property `jeap.messaging.sequential-inbox.housekeeping.delay` as it has no default value.
 
 ## [9.3.1] - 2025-10-30
 ### Changed

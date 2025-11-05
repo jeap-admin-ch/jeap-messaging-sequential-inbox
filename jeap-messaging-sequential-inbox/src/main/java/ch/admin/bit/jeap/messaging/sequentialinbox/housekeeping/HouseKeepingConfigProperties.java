@@ -25,11 +25,13 @@ public class HouseKeepingConfigProperties {
      * service. Specify the delay as a `Duration` with a maximum precision of seconds.
      */
     @NotNull
-    private Duration delay = Duration.ofDays(14);
+    private Duration delay;
 
     /**
      * The maximum duration that a housekeeping process is allowed to run continuously in a single execution.
-     * The value cannot exceed 15 minutes.
+     * The value cannot exceed 15 minutes. This setting prevents a service instance to monopolize housekeeping tasks.
+     * Housekeeping tasks are run every 15 minutes by default and if a task cannot finish within this duration,
+     * it will be continued with the next scheduled run (possibly by another service instance).
      */
     @NotNull
     private Duration maxContinuousHouseKeepingDuration = Duration.ofMinutes(15);

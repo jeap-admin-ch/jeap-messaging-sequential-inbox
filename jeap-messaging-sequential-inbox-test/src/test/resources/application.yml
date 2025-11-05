@@ -19,6 +19,7 @@ jeap:
       error-topic-name: error-topic
     sequential-inbox:
       housekeeping:
+        delay: 14d
         # Avoid the housekeeping jobs interfering with the tests
         closed-instances-cron: "-"
         expiry-cron: "-"
