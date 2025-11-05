@@ -76,7 +76,7 @@ public class ErrorHandlingService {
 
         @Override
         public @Nullable String getDescription() {
-            return "The sequence instance to which this message belonged has expired and has been deleted from the inbox.";
+            return "This message expired while waiting for its predecessor. Fix the problem with the missing predecessor and then resend this message.";
         }
 
         @Override

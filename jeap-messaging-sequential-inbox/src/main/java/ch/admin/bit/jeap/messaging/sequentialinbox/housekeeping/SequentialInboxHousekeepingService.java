@@ -94,7 +94,7 @@ public class SequentialInboxHousekeepingService {
                   "Deleted {} sequence instances in {}.", endedAt, deletedSequencesTotal, Duration.between(startedAt, endedAt));
     }
 
-    private int deleteSequencesReadyForRemovalInBatches(ZonedDateTime stopAt) {
+    private int deleteSequencesReadyForRemovalInBatches(ZonedDateTime continueDeletingAtMaxUntil){
         final int batchSize = houseKeepingConfigProperties.getSequenceRemovalBatchSize();
         log.debug("Sequential inbox housekeeping: Starting to delete sequence instances ready for removal in batches of size {}.", batchSize);
         int deletedSequencesTotal = 0;
@@ -113,7 +113,7 @@ public class SequentialInboxHousekeepingService {
                 log.debug("No more sequence instances ready for removal.");
                 break;
             }
-        } while (stopAt.isAfter(ZonedDateTime.now()));
+        } while (continueDeletingAtMaxUntil.isAfter(ZonedDateTime.now()));
         if (deletedSequencesTotal > 0) {
             log.info("Sequential inbox housekeeping: deleted a total of {} sequence instances ready for removal in {} batches.",
                     deletedSequencesTotal, batch);
