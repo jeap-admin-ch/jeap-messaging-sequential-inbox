@@ -57,28 +57,6 @@ class SequentialInboxHousekeepingServiceIT extends SequentialInboxITBase {
         assertThat(messageRepository.findByMessageTypeAndIdempotenceIdInNewTransaction("testMessageType", idempotenceIdMessage2)).isPresent();
     }
 
-    @Test
-    void housekeeping_expiredSequence_should_be_deleted() {
-        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplate.setPropagationBehavior(Propagation.REQUIRES_NEW.value());
-        String idempotenceIdMessage1 = UUID.randomUUID().toString();
-        String idempotenceIdMessage2 = UUID.randomUUID().toString();
-
-        transactionTemplate.executeWithoutResult(status -> {
-            long sequenceInstanceId = saveSequenceInstance(UUID.randomUUID().toString(), SequenceInstanceState.OPEN);
-            saveMessage("testMessageType", sequenceInstanceId, idempotenceIdMessage1, true);
-            saveMessage("testMessageType", sequenceInstanceId, idempotenceIdMessage2, false);
-        });
-
-        assertThat(messageRepository.findByMessageTypeAndIdempotenceIdInNewTransaction("testMessageType", idempotenceIdMessage1)).isPresent();
-        assertThat(messageRepository.findByMessageTypeAndIdempotenceIdInNewTransaction("testMessageType", idempotenceIdMessage2)).isPresent();
-
-        housekeepingService.deleteExpiredMessages();
-
-        assertThat(messageRepository.findByMessageTypeAndIdempotenceIdInNewTransaction("testMessageType", idempotenceIdMessage1)).isEmpty();
-        assertThat(messageRepository.findByMessageTypeAndIdempotenceIdInNewTransaction("testMessageType", idempotenceIdMessage2)).isEmpty();
-    }
-
     private long saveSequenceInstance(String contextId, SequenceInstanceState state) {
         SequenceInstance sequenceInstance = SequenceInstance.builder()
                 .contextId(contextId)

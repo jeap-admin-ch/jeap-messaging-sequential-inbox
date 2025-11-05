@@ -81,4 +81,5 @@ public class SequentialInboxException extends RuntimeException {
     public static SequentialInboxException handlerMethodInvocationFailed(Method method, Throwable throwable) {
         return new SequentialInboxException("Invocation of message handler method %s failed".formatted(method), throwable);
     }
+
 }

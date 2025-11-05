@@ -19,8 +19,10 @@ jeap:
       error-topic-name: error-topic
     sequential-inbox:
       housekeeping:
-        closed-instances-cron: "-" # Avoid the housekeeping job interfering with the tests
+        # Avoid the housekeeping jobs interfering with the tests
+        closed-instances-cron: "-"
         expiry-cron: "-"
+        delete-for-removal-cron: "-"
 
 logging.level:
   ch.admin.bit.jeap.messaging.sequentialinbox: DEBUG

@@ -18,7 +18,6 @@ import org.testcontainers.junit.jupiter.Container;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -42,8 +41,6 @@ class MessageRepositoryTest {
     private MessageRepository messageRepository;
     @Autowired
     private SequenceInstanceRepository sequenceInstanceRepository;
-    @Autowired
-    private SpringDataJpaSequencedMessageRepository sequencedMessageRepository;
 
     @Autowired
     TestEntityManager testEntityManager;
@@ -242,85 +239,6 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void deleteExpiredMessages_deletesOnlyExpiredMessages() {
-        // Given
-        long sequenceInstanceId = createAndPersistSequenceInstance();
-
-        // Create a sequence instance that has already expired (retain_until is in the past)
-        String contextId = UUID.randomUUID().toString();
-        String name = "test-expired";
-        long expiredSequenceInstanceId = sequenceInstanceRepository.saveNewInstance(SequenceInstance.builder()
-                .name(name)
-                .contextId(contextId)
-                .state(SequenceInstanceState.OPEN)
-                .retentionPeriod(Duration.ofDays(7))
-                .build());
-
-
-        // Expire one sequence instance
-        testEntityManager.getEntityManager()
-                .createNativeQuery("UPDATE sequence_instance SET retain_until='2007-01-01' WHERE id=" + expiredSequenceInstanceId)
-                .executeUpdate();
-
-        // Create a message that belongs to the expired sequence
-        SequencedMessage expiredMessage = SequencedMessage.builder()
-                .messageType("TestMessage")
-                .sequencedMessageId(UUID.randomUUID())
-                .idempotenceId("test-idempotence-id-1")
-                .sequenceInstanceId(expiredSequenceInstanceId)
-                .state(SequencedMessageState.PROCESSED)
-                .clusterName("test-cluster")
-                .topic("test-topic")
-                .build();
-
-        // Create a message that has not expired yet (in a sequence where retain_until is in the future)
-        SequencedMessage validMessage = SequencedMessage.builder()
-                .messageType("TestMessage")
-                .sequencedMessageId(UUID.randomUUID())
-                .idempotenceId("test-idempotence-id-2")
-                .sequenceInstanceId(sequenceInstanceId)
-                .state(SequencedMessageState.PROCESSED)
-                .clusterName("test-cluster")
-                .topic("test-topic")
-                .build();
-
-        // Create buffered messages for both sequenced messages
-        BufferedMessage expiredBufferedMessage = BufferedMessage.builder()
-                .key(new byte[]{1, 2, 3})
-                .value(new byte[]{4, 5, 6})
-                .sequenceInstanceId(expiredSequenceInstanceId)
-                .build();
-
-        BufferedMessage validBufferedMessage = BufferedMessage.builder()
-                .key(new byte[]{7, 8, 9})
-                .value(new byte[]{10, 11, 12})
-                .sequenceInstanceId(sequenceInstanceId)
-                .build();
-
-        messageRepository.saveMessage(expiredBufferedMessage, expiredMessage);
-        messageRepository.saveMessage(validBufferedMessage, validMessage);
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-
-        // When
-        TestTransaction.start();
-        ZonedDateTime now = ZonedDateTime.now();
-        int deletedCount = messageRepository.deleteExpiredMessages(now);
-
-        // Then
-        assertThat(deletedCount).isEqualTo(1);
-
-        // Verify only the expired sequenced message was deleted
-        assertThat(sequencedMessageRepository.findById(validMessage.getId())).isPresent();
-        assertThat(sequencedMessageRepository.findById(expiredMessage.getId())).isEmpty();
-
-        // Verify only the expired buffered message was deleted
-        assertThat(testEntityManager.find(BufferedMessage.class, validBufferedMessage.getId())).isNotNull();
-        assertThat(testEntityManager.find(BufferedMessage.class, expiredBufferedMessage.getId())).isNull();
-    }
-
-
-    @Test
     void getWaitingMessageCountByType() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage waitingMessage = createSequencedMessage(sequenceInstanceId);
@@ -337,7 +255,124 @@ class MessageRepositoryTest {
                 .containsEntry("type", 1.0)
                 .containsEntry("otherType", 1.0)
                 .hasSize(2);
+    }
 
+    @Test
+    void getWaitingMessagesInNewTransaction_returnsOnlyWaitingMessages() {
+        long sequenceInstanceId = createAndPersistSequenceInstance();
+
+        SequencedMessage waitingMessage1 = SequencedMessage.builder()
+                .sequenceInstanceId(sequenceInstanceId)
+                .messageType("type1")
+                .sequencedMessageId(UUID.randomUUID())
+                .idempotenceId("idempotenceId1")
+                .clusterName("cluster")
+                .topic("topic")
+                .state(SequencedMessageState.WAITING)
+                .build();
+        SequencedMessage waitingMessage2 = SequencedMessage.builder()
+                .sequenceInstanceId(sequenceInstanceId)
+                .messageType("type2")
+                .sequencedMessageId(UUID.randomUUID())
+                .idempotenceId("idempotenceId2")
+                .clusterName("cluster")
+                .topic("topic")
+                .state(SequencedMessageState.WAITING)
+                .build();
+        SequencedMessage processedMessage = SequencedMessage.builder()
+                .sequenceInstanceId(sequenceInstanceId)
+                .messageType("type3")
+                .sequencedMessageId(UUID.randomUUID())
+                .idempotenceId("idempotenceId3")
+                .clusterName("cluster")
+                .topic("topic")
+                .state(SequencedMessageState.PROCESSED)
+                .build();
+        messageRepository.saveMessage(null, waitingMessage1);
+        messageRepository.saveMessage(null, waitingMessage2);
+        messageRepository.saveMessage(null, processedMessage);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        List<SequencedMessage> result = messageRepository.getWaitingMessagesInNewTransaction(sequenceInstanceId);
+
+        assertThat(result)
+                .hasSize(2)
+                .contains(waitingMessage1, waitingMessage2)
+                .doesNotContain(processedMessage);
+    }
+
+    @Test
+    void deleteNotClosedSequenceInstanceMessages_doesDeleteMessagesForNotClosedSequence() {
+        // Create an OPEN (not closed) sequence instance with messages
+        long openSequenceId = createAndPersistSequenceInstance();
+        SequencedMessage sequencedMessage = createSequencedMessage(openSequenceId);
+        BufferedMessage bufferedMessage = createBufferedMessageWithOneHeader(openSequenceId);
+        messageRepository.saveMessage(bufferedMessage, sequencedMessage);
+        Long headerId = bufferedMessage.getHeaders().getFirst().getId();
+
+        int deletedCount = messageRepository.deleteNotClosedSequenceInstanceMessages(openSequenceId);
+
+        // Should delete 1 sequenced message
+        assertThat(deletedCount).isEqualTo(1);
+
+        // Verify all entities are deleted
+        testEntityManager.clear(); // Clear the persistence context to ensure we fetch fresh data
+        assertThat(testEntityManager.find(SequencedMessage.class, sequencedMessage.getId())).isNull();
+        assertThat(testEntityManager.find(BufferedMessage.class, bufferedMessage.getId())).isNull();
+        assertThat(testEntityManager.find(MessageHeader.class, headerId)).isNull();
+    }
+
+    @Test
+    void deleteNotClosedSequenceInstanceMessages_doesNotDeleteMessagesForClosedSequence() {
+        // Create a CLOSED sequence instance with messages
+        SequenceInstance closedSequence = SequenceInstance.builder()
+                .name("closedTest")
+                .contextId(UUID.randomUUID().toString())
+                .state(SequenceInstanceState.CLOSED)
+                .retentionPeriod(Duration.ofDays(7))
+                .build();
+        long closedSequenceId = sequenceInstanceRepository.saveNewInstance(closedSequence);
+        SequencedMessage sequencedMessage = createSequencedMessage(closedSequenceId);
+        BufferedMessage bufferedMessage = createBufferedMessageWithOneHeader(closedSequenceId);
+        messageRepository.saveMessage(bufferedMessage, sequencedMessage);
+        Long headerId = bufferedMessage.getHeaders().getFirst().getId();
+
+        int deletedCount = messageRepository.deleteNotClosedSequenceInstanceMessages(closedSequenceId);
+
+        // Should not delete anything
+        assertThat(deletedCount).isZero();
+
+        // Verify entities still exist
+        testEntityManager.clear(); // Clear the persistence context to ensure we fetch fresh data
+        assertThat(testEntityManager.find(SequencedMessage.class, sequencedMessage.getId())).isNotNull();
+        assertThat(testEntityManager.find(BufferedMessage.class, bufferedMessage.getId())).isNotNull();
+        assertThat(testEntityManager.find(MessageHeader.class, headerId)).isNotNull();
+    }
+
+    @Test
+    void deleteNotClosedSequenceInstanceMessages_deletesMultipleMessages() {
+        long sequenceId = createAndPersistSequenceInstance();
+
+        // Create multiple messages for the same sequence
+        SequencedMessage message1 = createSequencedMessage(sequenceId);
+        SequencedMessage message2 = createSequencedMessage(sequenceId);
+        SequencedMessage message3 = createSequencedMessage(sequenceId);
+
+        messageRepository.saveMessage(null, message1);
+        messageRepository.saveMessage(null, message2);
+        messageRepository.saveMessage(null, message3);
+
+        int deletedCount = messageRepository.deleteNotClosedSequenceInstanceMessages(sequenceId);
+
+        // Should delete all 3 messages
+        assertThat(deletedCount).isEqualTo(3);
+
+        // Verify all are deleted
+        testEntityManager.clear(); // Clear the persistence context to ensure we fetch fresh data
+        assertThat(testEntityManager.find(SequencedMessage.class, message1.getId())).isNull();
+        assertThat(testEntityManager.find(SequencedMessage.class, message2.getId())).isNull();
+        assertThat(testEntityManager.find(SequencedMessage.class, message3.getId())).isNull();
     }
 
     private static SequencedMessage createSequencedMessage(long instanceId) {
@@ -364,4 +399,22 @@ class MessageRepositoryTest {
                 .retentionPeriod(Duration.ofDays(7))
                 .build());
     }
+
+    private BufferedMessage createBufferedMessageWithOneHeader(long sequenceInstanceId) {
+        BufferedMessage bufferedMessage = BufferedMessage.builder()
+                .sequenceInstanceId(sequenceInstanceId)
+                .key(new byte[]{1, 2, 3})
+                .value(new byte[]{4, 5, 6})
+                .sequenceInstanceId(sequenceInstanceId)
+                .build();
+        bufferedMessage.setHeaders(List.of(
+                MessageHeader.builder()
+                        .bufferedMessage(bufferedMessage)
+                        .headerName("name")
+                        .headerValue("value".getBytes(UTF_8))
+                        .build()
+        ));
+        return bufferedMessage;
+    }
+
 }

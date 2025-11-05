@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,13 +26,23 @@ interface SpringDataJpaSequencedMessageRepository extends JpaRepository<Sequence
     Optional<SequencedMessage> findByMessageTypeAndIdempotenceId(String messageType, String idempotenceId);
 
     @Modifying
-    @Query(nativeQuery = true, value = "DELETE FROM sequenced_message WHERE sequence_instance_id IN (SELECT id FROM sequence_instance WHERE retain_until < ?1)")
-    int deleteExpired(ZonedDateTime cutoffTime);
-
-    @Modifying
     @Query(nativeQuery = true, value = "DELETE FROM sequenced_message WHERE sequence_instance_id IN (SELECT id FROM sequence_instance WHERE state = 'CLOSED')")
     int deleteForClosedSequences();
 
     @Query(nativeQuery = true, value = "SELECT message_type as messageType, COUNT(*) as stateCount FROM sequenced_message WHERE state = 'WAITING' GROUP BY message_type")
     List<CountByType> getWaitingMessageCountGroupedByMessageType();
+
+    @Modifying
+    @Query(
+            nativeQuery = true,
+            value = """
+                DELETE FROM sequenced_message
+                WHERE sequence_instance_id = ?1
+                  AND EXISTS (
+                      SELECT 1 FROM sequence_instance WHERE id = ?1 AND state <> 'CLOSED'
+                )
+                """
+    )
+    int deleteForNotClosedSequencedId(long sequenceInstanceId);
+
 }

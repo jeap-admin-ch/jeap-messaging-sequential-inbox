@@ -6,16 +6,10 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 
 @Repository
 interface SpringDataJpaMessageHeaderRepository extends JpaRepository<MessageHeader, Long> {
-
-    @Modifying
-    @Query(nativeQuery = true, value = "DELETE FROM message_header WHERE buffered_message_id IN (" +
-            "SELECT bm.id FROM buffered_message bm join sequence_instance si on bm.sequence_instance_id = si.id WHERE si.retain_until < ?1)")
-    void deleteExpired(ZonedDateTime cutoffTime);
 
     @Modifying
     @Query(nativeQuery = true, value = "DELETE FROM message_header WHERE buffered_message_id IN (" +
@@ -24,4 +18,20 @@ interface SpringDataJpaMessageHeaderRepository extends JpaRepository<MessageHead
 
     @Query("SELECT mh FROM MessageHeader mh WHERE mh.bufferedMessage.sequencedMessageId = :sequencedMessageId")
     List<MessageHeader> getHeadersForSequencedMessageId(Long sequencedMessageId);
+
+
+    @Modifying
+    @Query(
+        nativeQuery = true,
+        value = """
+            DELETE FROM message_header
+            WHERE buffered_message_id IN (
+                SELECT bm.id FROM buffered_message bm
+                JOIN sequence_instance si ON bm.sequence_instance_id = si.id
+                WHERE bm.sequence_instance_id = ?1
+                  AND si.state <> 'CLOSED'
+            )
+            """
+    )
+    int deleteForNotClosedSequencedId(long sequenceInstanceId);
 }

@@ -51,6 +51,11 @@ public class MessageRepository {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
+    public List<SequencedMessage> getWaitingMessagesInNewTransaction(long sequenceInstanceId) {
+        return sequencedMessageRepository.findAllBySequenceInstanceIdAndStateIn(sequenceInstanceId, Set.of(SequencedMessageState.WAITING));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     public BufferedMessage getBufferedMessageInNewTransaction(SequencedMessage sequencedMessage) {
         return bufferedMessageRepository.getBySequencedMessageId(sequencedMessage.getId());
     }
@@ -71,17 +76,15 @@ public class MessageRepository {
     }
 
     /**
-     * Deletes all buffered messages, message headers and sequenced messages associated with
-     * sequence instances whose retention period has elapsed (retain_until < cutoffTime).
-     *
-     * @param cutoffTime The timestamp to compare against for determining expiration
+     * Deletes all messages (sequenced, buffered, headers) associated with a given sequence instance
+     * if the sequence instance is not in state CLOSED.
      * @return The number of sequenced messages deleted
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public int deleteExpiredMessages(java.time.ZonedDateTime cutoffTime) {
-        messageHeaderRepository.deleteExpired(cutoffTime);
-        bufferedMessageRepository.deleteExpired(cutoffTime);
-        return sequencedMessageRepository.deleteExpired(cutoffTime);
+    public int deleteNotClosedSequenceInstanceMessages(long sequenceInstanceId) {
+        messageHeaderRepository.deleteForNotClosedSequencedId(sequenceInstanceId);
+        bufferedMessageRepository.deleteForNotClosedSequencedId(sequenceInstanceId);
+        return sequencedMessageRepository.deleteForNotClosedSequencedId(sequenceInstanceId);
     }
 
     /**
