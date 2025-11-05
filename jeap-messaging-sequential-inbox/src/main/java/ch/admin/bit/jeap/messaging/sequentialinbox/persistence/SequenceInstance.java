@@ -37,7 +37,11 @@ public class SequenceInstance {
     private ZonedDateTime closedAt;
 
     @Column(name = "retain_until", nullable = false)
-    private ZonedDateTime retainUntil;
+    private ZonedDateTime retainUntil; // depends on the business process
+
+    @Setter
+    @Column(name = "remove_after")
+    private ZonedDateTime removeAfter; // depends on the DevOps process
 
     @Builder
     private SequenceInstance(@NonNull String name, @NonNull String contextId, SequenceInstanceState state, @NonNull Duration retentionPeriod) {
@@ -46,12 +50,14 @@ public class SequenceInstance {
         this.state = state == null ? SequenceInstanceState.OPEN : state;
         this.createdAt = ZonedDateTime.now();
         this.retainUntil = this.createdAt.plus(retentionPeriod);
+        this.removeAfter = null;
     }
 
     public void close() {
         if (state == SequenceInstanceState.OPEN) {
             state = SequenceInstanceState.CLOSED;
             closedAt = ZonedDateTime.now();
+            removeAfter = null; // closed sequences are removed automatically, i.e. delays don't apply
         }
     }
 

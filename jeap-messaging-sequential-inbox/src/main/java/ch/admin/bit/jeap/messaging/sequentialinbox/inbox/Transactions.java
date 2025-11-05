@@ -27,7 +27,7 @@ public class Transactions {
         transactionTemplate.executeWithoutResult(ignored -> runnable.run());
     }
 
-    <T> T callInNewTransaction(Supplier<T> callable) {
+    public <T> T callInNewTransaction(Supplier<T> callable) {
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager, REQUIRES_NEW);
         return transactionTemplate.execute(ignored -> callable.get());
     }

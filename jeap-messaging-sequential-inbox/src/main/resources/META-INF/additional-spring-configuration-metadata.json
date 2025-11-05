@@ -20,14 +20,20 @@
     },
     {
       "name": "jeap.messaging.sequential-inbox.housekeeping.expiry-cron",
-      "description": "Cron expression for scheduling the housekeeping task that deletes expired messages.",
-      "defaultValue": "0 */15 * * * *",
+      "description": "Cron expression for scheduling the housekeeping task that marks expired messages for removal.",
+      "defaultValue": "0 5/15 * * * *",
       "type": "java.lang.String"
     },
     {
       "name": "jeap.messaging.sequential-inbox.housekeeping.closed-instances-cron",
       "description": "Cron expression for scheduling the housekeeping task that deletes closed sequence instances.",
-      "defaultValue": "0 5/15 * * * *",
+      "defaultValue": "0 0/15 * * * *",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "jeap.messaging.sequential-inbox.housekeeping.delete-for-removal-cron",
+      "description": "Cron expression for scheduling the housekeeping task that deletes for-removal sequence instances.",
+      "defaultValue": "0 10/15 * * * *",
       "type": "java.lang.String"
     },
     {

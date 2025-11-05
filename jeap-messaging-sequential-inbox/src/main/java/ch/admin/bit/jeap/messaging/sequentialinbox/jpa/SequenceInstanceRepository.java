@@ -1,14 +1,17 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.jpa;
 
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstance;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstanceState;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -72,15 +75,20 @@ public class SequenceInstanceRepository {
         return springDataJpaSequenceInstanceRepository.deleteAllClosed();
     }
 
-    /**
-     * Deletes all sequence instances that have expired (retain_until < cutoffTime).
-     *
-     * @param cutoffTime The timestamp to compare against for determining expiration
-     * @return The number of deleted sequence instances
-     */
     @Transactional(propagation = Propagation.MANDATORY)
-    public int deleteExpiredInstances(ZonedDateTime cutoffTime) {
-        return springDataJpaSequenceInstanceRepository.deleteExpiredInstances(cutoffTime);
+    public int markExpiredInstancesForDelayedRemoval(long delaySeconds) {
+        return springDataJpaSequenceInstanceRepository.markExpiredInstancesForDelayedRemoval(delaySeconds);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public List<SequenceInstance> findInstancesForRemovalOldestFirst(int maxNumInstances) {
+        return springDataJpaSequenceInstanceRepository.findByRemoveAfterBeforeAndStateNotOrderByRemoveAfterAsc(
+                ZonedDateTime.now(), SequenceInstanceState.CLOSED, Pageable.ofSize(maxNumInstances));
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public int deleteNotClosedById(long sequenceInstanceId) {
+        return springDataJpaSequenceInstanceRepository.deleteByIdAndStateNot(sequenceInstanceId, SequenceInstanceState.CLOSED);
     }
 
 }

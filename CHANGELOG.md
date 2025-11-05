@@ -12,6 +12,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [10.0.0] - 2025-11-07
+### Changed
+- Buffered sequenced messages are no longer immediately deleted when their retain-until date is reached. Instead, they
+  are marked for removal and retained for an additional interval (`jeap.messaging.sequential-inbox.housekeeping.delay`).
+  This delay allows DevOps engineers time to resolve sequencing issues. After the interval, the inbox housekeeping
+  process forwards the messages to the error handling service and then deletes them from the inbox. This version of
+  the inbox library is breaking because of a needed new field on the `inbox sequence_instance` table. See the sequential
+  inbox documentation for details on how to perform the upgrade to version 10.0.0.
+
 ## [9.3.1] - 2025-10-30
 ### Changed
 - update jeap-messaging from 9.3.0 to 9.3.1
