@@ -5,10 +5,7 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.deserializer.Se
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.stream.Collectors.toSet;
 
@@ -43,6 +40,10 @@ public class SequentialInboxConfiguration {
 
     public Sequence getSequenceByQualifiedSequencedMessageTypeName(String sequencedMessageTypeQn) {
         return sequenceByQualifiedName.get(sequencedMessageTypeQn);
+    }
+
+    public Optional<Sequence> getSequenceByName(String sequenceName) {
+        return sequences.stream().filter(s -> s.getName().equalsIgnoreCase(sequenceName)).findFirst();
     }
 
     public SequencedMessageType requireSequencedMessageTypeByQualifiedName(String sequencedMessageTypeQn) {

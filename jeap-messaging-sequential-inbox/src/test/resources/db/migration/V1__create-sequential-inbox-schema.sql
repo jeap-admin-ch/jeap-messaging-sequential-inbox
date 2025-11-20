@@ -4,21 +4,22 @@ CREATE SEQUENCE sequenced_message_sequence START WITH 1 INCREMENT 50 CYCLE;
 
 CREATE TABLE sequence_instance
 (
-    id           bigint                   not null
+    id             bigint                   not null
         constraint sequence_instance_pkey primary key,
-    name         text                     not null,
-    context_id   text                     not null,
-    state        text                     not null,
-    created_at   timestamp with time zone NOT NULL,
-    closed_at    timestamp with time zone,
-    retain_until timestamp with time zone NOT NULL,
-    remove_after timestamp with time zone
+    name           text                     not null,
+    context_id     text                     not null,
+    state          text                     not null,
+    created_at     timestamp with time zone NOT NULL,
+    closed_at      timestamp with time zone,
+    retain_until   timestamp with time zone NOT NULL,
+    remove_after   timestamp with time zone,
+    pending_action text
 );
 
 ALTER TABLE sequence_instance
     ADD CONSTRAINT SEQUENCE_INSTANCE_NAME_CONTEXT_ID_UK UNIQUE (name, context_id);
 
-CREATE INDEX idx_sequence_instance_remove_after ON sequence_instance(remove_after);
+CREATE INDEX idx_sequence_instance_remove_after ON sequence_instance (remove_after);
 
 CREATE TABLE sequenced_message
 (
@@ -37,7 +38,8 @@ CREATE TABLE sequenced_message
     trace_id_string      text,
     created_at           timestamp with time zone NOT NULL,
     state_changed_at     timestamp with time zone,
-    sequence_instance_id bigint references sequence_instance
+    sequence_instance_id bigint references sequence_instance,
+    pending_action       text
 );
 
 CREATE INDEX sequenced_message_sequence_instance_id ON sequenced_message (sequence_instance_id);

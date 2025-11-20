@@ -4,6 +4,7 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstance;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstanceState;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -87,8 +88,33 @@ public class SequenceInstanceRepository {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
+    public List<SequenceInstance> findAllByPendingActionIsNotNull() {
+        return springDataJpaSequenceInstanceRepository.findAllByPendingActionIsNotNull();
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
     public int deleteNotClosedById(long sequenceInstanceId) {
         return springDataJpaSequenceInstanceRepository.deleteByIdAndStateNot(sequenceInstanceId, SequenceInstanceState.CLOSED);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SequenceInstance> findAllExpired(Pageable pageable){
+        return springDataJpaSequenceInstanceRepository.findAllByRetainUntilBefore(ZonedDateTime.now(), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SequenceInstance> findByNameAndContextId(String name, String contextId) {
+        return springDataJpaSequenceInstanceRepository.findByNameAndContextId(name, contextId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SequenceInstance> findById(long id) {
+        return springDataJpaSequenceInstanceRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SequenceInstance> findAllWithRetentionPeriodElapsed75Percent(Pageable pageable){
+        return springDataJpaSequenceInstanceRepository.findAllWithRetentionPeriodElapsed75Percent(pageable);
     }
 
 }
