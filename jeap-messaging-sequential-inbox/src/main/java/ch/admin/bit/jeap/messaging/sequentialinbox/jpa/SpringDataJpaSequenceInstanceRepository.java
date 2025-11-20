@@ -5,6 +5,7 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstanceS
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -58,7 +59,7 @@ interface SpringDataJpaSequenceInstanceRepository extends JpaRepository<Sequence
     @Query("DELETE FROM SequenceInstance si WHERE si.id = :id AND si.state <> :state")
     int deleteByIdAndStateNot(@Param("id") long sequenceInstanceId, @Param("state") SequenceInstanceState state);
 
-    List<SequenceInstance> findAllByPendingActionIsNotNull();
+    Slice<SequenceInstance> findAllByPendingActionIsNotNull(Pageable pageable);
 
     @Query(nativeQuery = true, value = "SELECT * from sequence_instance where created_at + (0.75 * EXTRACT(EPOCH FROM retain_until - created_at)) * INTERVAL '1 second' < now()")
     Page<SequenceInstance> findAllWithRetentionPeriodElapsed75Percent(Pageable pageable);

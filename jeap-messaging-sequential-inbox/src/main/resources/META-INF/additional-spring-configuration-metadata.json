@@ -52,6 +52,42 @@
       "name": "jeap.messaging.sequential-inbox.sequencing-start-timestamp",
       "description": "Timestamp from which the sequencing should effectively start. Once this parameter is configured, the recording mode will be activated.",
       "type": "java.time.LocalDateTime"
+    },
+    {
+      "name": "jeap.messaging.sequential-inbox.pending-actions.messages-cron",
+      "description": "Cron expression for scheduling the pending action task that process messages with pending actions.",
+      "defaultValue": "0 0/2 * * * *",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "jeap.messaging.sequential-inbox.pending-actions.sequences-cron",
+      "description": "Cron expression for scheduling the pending action task that process sequence instances with pending actions.",
+      "defaultValue": "0 1/2 * * * *",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "jeap.messaging.sequential-inbox.pending-actions.lock-at-least",
+      "description": "Minimal time in seconds to keep a lock at this job.",
+      "defaultValue": "5",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "jeap.messaging.sequential-inbox.pending-actions.lock-at-most",
+      "description": "Maximal time in minutes to keep a lock at this job.",
+      "defaultValue": "30",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "jeap.messaging.sequential-inbox.pending-actions.page-size",
+      "description": "Size for the queries [pages].",
+      "defaultValue": "50",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "jeap.messaging.sequential-inbox.pending-actions.max-pages",
+      "description": "Max. pages to process in one run. This limits the amount of time one run can max. spend.",
+      "defaultValue": "10",
+      "type": "java.lang.String"
     }
   ]
 }

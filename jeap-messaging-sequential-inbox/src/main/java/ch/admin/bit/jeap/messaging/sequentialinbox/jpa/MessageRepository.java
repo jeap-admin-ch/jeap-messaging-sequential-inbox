@@ -1,8 +1,13 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.jpa;
 
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.*;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.BufferedMessage;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.MessageHeader;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessage;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessageState;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -53,8 +58,8 @@ public class MessageRepository {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
-    public List<SequencedMessage> getMessagesWithPendingAction() {
-        return sequencedMessageRepository.findAllByPendingActionIsNotNull();
+    public Slice<SequencedMessage> getMessagesWithPendingAction(Pageable pageable) {
+        return sequencedMessageRepository.findAllByPendingActionIsNotNull(pageable);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
