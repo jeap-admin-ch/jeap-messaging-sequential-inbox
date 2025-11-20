@@ -56,6 +56,11 @@ public class SequencedMessage {
     @Column(name = "sequence_instance_id")
     private long sequenceInstanceId;
 
+    @Setter
+    @Column(name = "pending_action")
+    @Enumerated(EnumType.STRING)
+    private SequencedMessagePendingAction pendingAction;
+
     @Builder
     private SequencedMessage(long sequenceInstanceId, String messageType, UUID sequencedMessageId, String idempotenceId, String clusterName, String topic, SequencedMessageState state, SequentialInboxTraceContext traceContext) {
         this.messageType = messageType;
@@ -78,6 +83,7 @@ public class SequencedMessage {
                 ", idempotenceId='" + idempotenceId + '\'' +
                 ", state=" + state +
                 ", sequenceInstanceId=" + sequenceInstanceId +
+                ", pendingAction=" + pendingAction +
                 '}';
     }
 
@@ -92,4 +98,5 @@ public class SequencedMessage {
     public int hashCode() {
         return Objects.hashCode(id);
     }
+
 }

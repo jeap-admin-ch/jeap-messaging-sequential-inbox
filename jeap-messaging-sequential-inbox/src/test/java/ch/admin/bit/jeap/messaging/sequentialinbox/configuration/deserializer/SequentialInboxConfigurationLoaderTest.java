@@ -28,5 +28,8 @@ class SequentialInboxConfigurationLoaderTest {
                 .isNull();
         assertThat(seq.getRetentionPeriod())
                 .isEqualTo(Duration.ofHours(6));
+        assertThat(sequentialInboxConfiguration.getSequenceByName("eventType2AfterEventType1")).isNotNull();
+        assertThat(sequentialInboxConfiguration.getSequenceByName("eventType99AfterEventType98")).isNotNull();
+        assertThat(sequentialInboxConfiguration.getSequenceByName("fooBar")).isEmpty();
     }
 }
