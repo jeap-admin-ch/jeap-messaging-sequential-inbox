@@ -1,16 +1,20 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.jpa;
 
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstance;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstancePendingAction;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstanceState;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -27,6 +31,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DataJpaTest
 @ContextConfiguration(classes = SequenceInstanceRepositoryTest.TestConfig.class)
 class SequenceInstanceRepositoryTest {
+
+    @Autowired
+    private TestEntityManager testEntityManager;
 
     @Container
     @ServiceConnection
@@ -173,7 +180,7 @@ class SequenceInstanceRepositoryTest {
         int deletedCount = sequenceInstanceRepository.deleteNotClosedById(closedId);
 
         // Should not delete anything
-        assertThat(deletedCount).isEqualTo(0);
+        assertThat(deletedCount).isZero();
         // Verify it still exists
         assertThat(jpaSequenceInstanceRepository.findById(closedId)).isPresent();
     }
@@ -184,7 +191,138 @@ class SequenceInstanceRepositoryTest {
         int deletedCount = sequenceInstanceRepository.deleteNotClosedById(999999L);
 
         // Should not delete anything
-        assertThat(deletedCount).isEqualTo(0);
+        assertThat(deletedCount).isZero();
+    }
+
+    @Test
+    void findAllByPendingActionIsNotNull_returnsInstancesWithPendingAction() {
+        SequenceInstance withClose = SequenceInstance.builder()
+                .name("pending1")
+                .contextId("ctx1")
+                .state(SequenceInstanceState.OPEN)
+                .retentionPeriod(Duration.ofMinutes(1))
+                .build();
+        ReflectionTestUtils.setField(withClose, "id", 58485481L);
+        ReflectionTestUtils.setField(withClose, "pendingAction", SequenceInstancePendingAction.CLOSE);
+        SequenceInstance withConsumeAll = SequenceInstance.builder()
+                .name("pending2")
+                .contextId("ctx2")
+                .state(SequenceInstanceState.OPEN)
+                .retentionPeriod(Duration.ofMinutes(1))
+                .build();
+        ReflectionTestUtils.setField(withConsumeAll, "id", 58485482L);
+        ReflectionTestUtils.setField(withConsumeAll, "pendingAction", SequenceInstancePendingAction.CONSUME_ALL);
+        SequenceInstance withoutAction = SequenceInstance.builder()
+                .name("noPending")
+                .contextId("ctx3")
+                .state(SequenceInstanceState.OPEN)
+                .retentionPeriod(Duration.ofMinutes(1))
+                .build();
+        ReflectionTestUtils.setField(withoutAction, "id", 58485483L);
+
+        testEntityManager.persist(withClose);
+        testEntityManager.persist(withConsumeAll);
+        testEntityManager.persist(withoutAction);
+
+        var result = sequenceInstanceRepository.findAllByPendingActionIsNotNull();
+        assertThat(result)
+                .extracting(SequenceInstance::getName)
+                .containsExactlyInAnyOrder("pending1", "pending2");
+    }
+
+    @Test
+    void findAllExpired_returnsOnlyInstancesWithRetainUntilBeforeNow() {
+        saveSequenceInstance(17651L, "past1", Duration.ofMinutes(-10));
+        saveSequenceInstance(17652L, "past2", Duration.ofMinutes(-10));
+        saveSequenceInstance(17653L, "past3", Duration.ofMinutes(-10));
+        saveSequenceInstance(17654L, "past4", Duration.ofMinutes(-10));
+        saveSequenceInstance(17655L, "future", Duration.ofMinutes(10));
+
+        var pageable = PageRequest.of(0, 10);
+        var result = sequenceInstanceRepository.findAllExpired(pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(4);
+
+        assertThat(result.getContent())
+                .extracting(SequenceInstance::getName)
+                .doesNotContain("future")
+                .contains("past1", "past2", "past3", "past4");
+    }
+
+    @Test
+    void findByNameAndContextId_returnsCorrectInstance() {
+        String name = "testName";
+        String contextId = "testContext";
+        sequenceInstanceRepository.saveNewInstance(createSequenceInstance(name, contextId));
+        sequenceInstanceRepository.saveNewInstance(createSequenceInstance("otherName", "otherContext"));
+
+        Optional<SequenceInstance> result = sequenceInstanceRepository.findByNameAndContextId(name, contextId);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getName()).isEqualTo(name);
+        assertThat(result.get().getContextId()).isEqualTo(contextId);
+    }
+
+    @Test
+    void findAllWithRetentionPeriodElapsed75Percent_returnsCorrectInstances() {
+        long id = 687770L;
+        // Instance with 80% retention elapsed
+        saveSequenceInstance(id, "elapsed80", 80, 20);
+
+        // Instance with 50% retention elapsed
+        saveSequenceInstance(++id, "elapsed50", 50, 50);
+
+        // Instance with 100% retention elapsed
+        saveSequenceInstance(++id, "elapsed100", 100, 0);
+
+        // Instance with 0% retention elapsed
+        saveSequenceInstance(++id, "elapsed0", 0, 100);
+
+        var result = sequenceInstanceRepository.findAllWithRetentionPeriodElapsed75Percent(PageRequest.of(0, 1));
+
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getTotalPages()).isEqualTo(2);
+
+        assertThat(result.getContent())
+                .extracting(SequenceInstance::getName)
+                .contains("elapsed80")
+                .doesNotContain("elapsed50", "elapsed0");
+
+        result = sequenceInstanceRepository.findAllWithRetentionPeriodElapsed75Percent(PageRequest.of(1, 1));
+
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getTotalPages()).isEqualTo(2);
+
+        assertThat(result.getContent())
+                .extracting(SequenceInstance::getName)
+                .contains("elapsed100")
+                .doesNotContain("elapsed50", "elapsed0");
+
+    }
+
+    private void saveSequenceInstance(long id, String name, int createdAtDelay, int retainUntil) {
+        SequenceInstance sequenceInstance = SequenceInstance.builder()
+                .name(name)
+                .contextId("ctx1")
+                .state(SequenceInstanceState.OPEN)
+                .retentionPeriod(Duration.ofMinutes(1))
+                .build();
+        ReflectionTestUtils.setField(sequenceInstance, "id", id);
+        ReflectionTestUtils.setField(sequenceInstance, "createdAt", ZonedDateTime.now().minusMinutes(createdAtDelay));
+        ReflectionTestUtils.setField(sequenceInstance, "retainUntil", ZonedDateTime.now().plusMinutes(retainUntil));
+        testEntityManager.persist(sequenceInstance);
+    }
+
+
+    private void saveSequenceInstance(long id, String name, Duration retentionPeriod) {
+        SequenceInstance sequenceInstance = SequenceInstance.builder()
+                .name(name)
+                .contextId("ctx1")
+                .state(SequenceInstanceState.OPEN)
+                .retentionPeriod(retentionPeriod)
+                .build();
+        ReflectionTestUtils.setField(sequenceInstance, "id", id);
+        testEntityManager.persist(sequenceInstance);
     }
 
     private SequenceInstance createSequenceInstance(String name, String contextId) {
@@ -212,13 +350,12 @@ class SequenceInstanceRepositoryTest {
     /**
      * Creates and saves a sequence instance, then sets its removeAfter timestamp
      */
-    private long createAndSaveSequenceInstanceWithRemovalTime(String name, String contextId, SequenceInstanceState state,
+    private void createAndSaveSequenceInstanceWithRemovalTime(String name, String contextId, SequenceInstanceState state,
                                                                 Duration retentionPeriod, ZonedDateTime removeAfter) {
         long id = createAndSaveSequenceInstance(name, contextId, state, retentionPeriod);
         SequenceInstance instance = jpaSequenceInstanceRepository.findById(id).orElseThrow();
         instance.setRemoveAfter(removeAfter);
         jpaSequenceInstanceRepository.save(instance);
-        return id;
     }
 
 }

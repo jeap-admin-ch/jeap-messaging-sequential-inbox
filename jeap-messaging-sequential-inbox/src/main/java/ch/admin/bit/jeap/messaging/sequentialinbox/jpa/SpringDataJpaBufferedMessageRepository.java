@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 interface SpringDataJpaBufferedMessageRepository extends JpaRepository<BufferedMessage, Long> {
 
@@ -28,5 +30,7 @@ interface SpringDataJpaBufferedMessageRepository extends JpaRepository<BufferedM
                 """
     )
     int deleteForNotClosedSequencedId(long sequenceInstanceId);
+
+    List<BufferedMessage> findAllBySequenceInstanceId(long sequenceInstanceId);
 
 }

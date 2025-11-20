@@ -1,9 +1,6 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.jpa;
 
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.BufferedMessage;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.MessageHeader;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessage;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessageState;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.*;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -56,6 +53,11 @@ public class MessageRepository {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
+    public List<SequencedMessage> getMessagesWithPendingAction() {
+        return sequencedMessageRepository.findAllByPendingActionIsNotNull();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     public BufferedMessage getBufferedMessageInNewTransaction(SequencedMessage sequencedMessage) {
         return bufferedMessageRepository.getBySequencedMessageId(sequencedMessage.getId());
     }
@@ -63,6 +65,16 @@ public class MessageRepository {
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     public void setMessageStateInNewTransaction(SequencedMessage sequencedMessage, SequencedMessageState sequencedMessageState) {
         sequencedMessageRepository.updateStateById(sequencedMessage.getId(), sequencedMessageState.name());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
+    public void clearPendingActionInNewTransaction(SequencedMessage sequencedMessage) {
+        sequencedMessageRepository.clearPendingActionById(sequencedMessage.getId());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
+    public void clearPendingActionInNewTransaction(SequencedMessage sequencedMessage, SequencedMessageState sequencedMessageState) {
+        sequencedMessageRepository.clearPendingActionById(sequencedMessage.getId(), sequencedMessageState.name());
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -112,5 +124,20 @@ public class MessageRepository {
         }
         return headers.stream()
                 .collect(toMap(MessageHeader::getHeaderName, MessageHeader::getHeaderValue));
+    }
+
+    @Transactional(readOnly = true)
+    public List<SequencedMessage> findAllBySequenceInstanceId(long sequenceInstanceId) {
+        return sequencedMessageRepository.findAllBySequenceInstanceId(sequenceInstanceId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BufferedMessage> findAllBufferedMessagesBySequenceInstanceId(long sequenceInstanceId) {
+        return bufferedMessageRepository.findAllBySequenceInstanceId(sequenceInstanceId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SequencedMessage> findById(long id) {
+        return sequencedMessageRepository.findById(id);
     }
 }
