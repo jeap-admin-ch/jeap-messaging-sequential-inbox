@@ -5,9 +5,8 @@ import ch.admin.bit.jeap.messaging.avro.AvroMessageKey;
 import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.Sequence;
 import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.SequencedMessageType;
 import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.SequentialInboxConfiguration;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstance;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessage;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessageState;
+import ch.admin.bit.jeap.messaging.sequentialinbox.jpa.SequenceInstanceRepository;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.*;
 import ch.admin.bit.jeap.messaging.sequentialinbox.spring.SequentialInboxMessageHandler;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +25,7 @@ import java.util.Optional;
 public class SequentialInboxService {
     private final SequenceInstanceFactory sequenceInstanceFactory;
     private final SequencedMessageService sequencedMessageService;
+    private final SequenceInstanceRepository sequenceInstanceRepository;
     private final SequentialInboxConfiguration inboxConfiguration;
     private final Transactions tx;
     private final MessageHandlerService messageHandlerService;
@@ -89,6 +89,57 @@ public class SequentialInboxService {
         acknowledgment.acknowledge();
     }
 
+    @Timed(value = "jeap.messaging.sequential-inbox.handle-message-with-pending-action", percentiles = {0.5, 0.8, 0.95, 0.99})
+    public void handleMessageWithPendingAction(SequencedMessage sequencedMessage) {
+        tx.runInNewTransaction(() -> {
+            // First process the buffered message with pending action
+            bufferedMessageService.processBufferedMessageWithPendingAction(sequencedMessage);
+            // Lock the sequence instance for update to avoid concurrent access to the inbox for the current context
+            SequenceInstance lockedSequenceInstance = sequenceInstanceFactory.getExistingSequenceInstanceAndLockForUpdate(sequencedMessage.getSequenceInstanceId());
+            inboxConfiguration.getSequenceByName(lockedSequenceInstance.getName()).ifPresent(seq -> {
+                // Process any other buffered messages that can now be released
+                boolean sequenceComplete = bufferedMessageService.processBufferedMessages(lockedSequenceInstance, seq);
+                // Set the sequence to complete if all messages have been processed
+                if (sequenceComplete) {
+                    lockedSequenceInstance.close();
+                }
+            });
+        });
+
+    }
+
+    @Timed(value = "jeap.messaging.sequential-inbox.handle-sequence-with-pending-action", percentiles = {0.5, 0.8, 0.95, 0.99})
+    public void handleSequenceWithPendingAction(SequenceInstance sequenceInstance) {
+        tx.runInNewTransaction(() -> {
+            if (SequenceInstancePendingAction.CLOSE.equals(sequenceInstance.getPendingAction())) {
+                log.info("Force close sequence {}", sequenceInstance);
+                SequenceInstance lockedSequenceInstance = sequenceInstanceFactory.getExistingSequenceInstanceAndLockForUpdate(sequenceInstance.getId());
+                lockedSequenceInstance.close();
+                lockedSequenceInstance.setPendingAction(null);
+            } else if (SequenceInstancePendingAction.CONSUME_ALL.equals(sequenceInstance.getPendingAction())) {
+                // Lock the sequence instance for update to avoid concurrent access to the inbox for the current context
+                SequenceInstance lockedSequenceInstance = sequenceInstanceFactory.getExistingSequenceInstanceAndLockForUpdate(sequenceInstance.getId());
+                inboxConfiguration.getSequenceByName(lockedSequenceInstance.getName()).ifPresent(seq -> {
+                    // Process any buffered messages with forceProcessAll = true
+                    boolean sequenceComplete = bufferedMessageService.processBufferedMessages(lockedSequenceInstance, seq, true);
+
+                    // Set the sequence to complete if all messages have been processed
+                    if (sequenceComplete) {
+                        lockedSequenceInstance.close();
+                    }
+                });
+
+                // Remove the pending action on the sequence instance
+                lockedSequenceInstance.setPendingAction(null);
+
+            } else {
+                log.warn("Unknown pending action {} for sequence {}", sequenceInstance.getPendingAction(), sequenceInstance);
+            }
+
+        });
+
+    }
+
     private String getContextId(AvroMessage avroMessage, SequencedMessageType sequencedMessageType) {
         if (!sequencedMessageType.shouldSequenceMessage(avroMessage)) {
             return null;
@@ -96,6 +147,7 @@ public class SequentialInboxService {
         return sequencedMessageType.extractContextId(avroMessage);
     }
 
+    @SuppressWarnings("java:S107")
     private void handleMessage(ConsumerRecord<AvroMessageKey, AvroMessage> consumerRecord, SequentialInboxMessageHandler messageHandler,
                                SequencedMessageType sequencedMessageType, long sequenceInstanceId, Sequence sequence, String contextId, boolean recordModeIsEnabled, String qualifiedSequencedMessageTypeName) {
         AvroMessage avroMessage = consumerRecord.value();
@@ -147,6 +199,6 @@ public class SequentialInboxService {
 
     private static boolean isAlreadyProcessedOrWaiting(Optional<SequencedMessage> existingSequencedMessage) {
         return existingSequencedMessage.isPresent() &&
-                SequencedMessageState.waitingOrProcessed(existingSequencedMessage.get().getState());
+               SequencedMessageState.waitingOrProcessed(existingSequencedMessage.get().getState());
     }
 }

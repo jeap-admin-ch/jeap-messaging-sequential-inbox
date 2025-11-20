@@ -12,6 +12,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [12.0.0] - 2025-11-21
+### Changed
+- Add new pending action to sequence instance and sequenced message in order to support devOps operations
+- This version of the inbox library is breaking because new fields are needed in the database schema. See the file
+[./jeap-messaging-sequential-inbox-test/src/test/resources/db/migration/V3__add-pending-action.sql]
+for a DDL script that performs the schema upgrade from version 11 to version 12.0.0.
+
+
 ## [11.1.0] - 2025-11-14
 ### Changed
 - update jeap-messaging from 10.0.1 to 10.1.0

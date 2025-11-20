@@ -43,6 +43,11 @@ public class SequenceInstance {
     @Column(name = "remove_after")
     private ZonedDateTime removeAfter; // depends on the DevOps process
 
+    @Setter
+    @Column(name = "pending_action")
+    @Enumerated(EnumType.STRING)
+    private SequenceInstancePendingAction pendingAction;
+
     @Builder
     private SequenceInstance(@NonNull String name, @NonNull String contextId, SequenceInstanceState state, @NonNull Duration retentionPeriod) {
         this.name = name;
@@ -72,4 +77,5 @@ public class SequenceInstance {
     public int hashCode() {
         return Objects.hashCode(id);
     }
+
 }

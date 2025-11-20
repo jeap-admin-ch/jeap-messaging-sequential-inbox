@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.transaction.TestTransaction;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
@@ -373,6 +374,61 @@ class MessageRepositoryTest {
         assertThat(testEntityManager.find(SequencedMessage.class, message1.getId())).isNull();
         assertThat(testEntityManager.find(SequencedMessage.class, message2.getId())).isNull();
         assertThat(testEntityManager.find(SequencedMessage.class, message3.getId())).isNull();
+    }
+
+    @Test
+    void clearPendingActionInNewTransaction_clearsPendingAction() {
+        long sequenceInstanceId = createAndPersistSequenceInstance();
+        SequencedMessage sequencedMessage = createSequencedMessage(sequenceInstanceId);
+        ReflectionTestUtils.setField(sequencedMessage, "pendingAction", SequencedMessagePendingAction.CONSUME);
+        messageRepository.saveMessage(null, sequencedMessage);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        messageRepository.clearPendingActionInNewTransaction(sequencedMessage);
+
+        TestTransaction.start();
+        SequencedMessage updated = testEntityManager.find(SequencedMessage.class, sequencedMessage.getId());
+        assertThat(updated.getPendingAction()).isNull();
+        TestTransaction.end();
+    }
+
+    @Test
+    void clearPendingActionInNewTransaction_clearsPendingActionAndSetState() {
+        long sequenceInstanceId = createAndPersistSequenceInstance();
+        SequencedMessage sequencedMessage = createSequencedMessage(sequenceInstanceId);
+        ReflectionTestUtils.setField(sequencedMessage, "pendingAction", SequencedMessagePendingAction.CONSUME);
+        messageRepository.saveMessage(null, sequencedMessage);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        messageRepository.clearPendingActionInNewTransaction(sequencedMessage, SequencedMessageState.PROCESSED);
+
+        TestTransaction.start();
+        SequencedMessage updated = testEntityManager.find(SequencedMessage.class, sequencedMessage.getId());
+        assertThat(updated.getPendingAction()).isNull();
+        assertThat(updated.getState()).isEqualTo(SequencedMessageState.PROCESSED);
+        TestTransaction.end();
+    }
+
+    @Test
+    void getMessagesWithPendingAction_returnsMessagesWithPendingAction() {
+        long sequenceInstanceId = createAndPersistSequenceInstance();
+        SequencedMessage messageWithPendingAction = createSequencedMessage(sequenceInstanceId);
+        ReflectionTestUtils.setField(messageWithPendingAction, "pendingAction", SequencedMessagePendingAction.CONSUME);
+        SequencedMessage messageWithoutPendingAction = createSequencedMessage(sequenceInstanceId);
+
+        messageRepository.saveMessage(null, messageWithPendingAction);
+        messageRepository.saveMessage(null, messageWithoutPendingAction);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        List<SequencedMessage> result = messageRepository.getMessagesWithPendingAction();
+
+        assertThat(result)
+                .extracting(SequencedMessage::getId)
+                .contains(messageWithPendingAction.getId())
+                .doesNotContain(messageWithoutPendingAction.getId());
     }
 
     private static SequencedMessage createSequencedMessage(long instanceId) {

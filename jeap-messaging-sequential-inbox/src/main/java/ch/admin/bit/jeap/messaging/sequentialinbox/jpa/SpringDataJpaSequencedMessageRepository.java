@@ -19,9 +19,21 @@ interface SpringDataJpaSequencedMessageRepository extends JpaRepository<Sequence
 
     List<SequencedMessage> findAllBySequenceInstanceIdAndStateIn(long sequenceInstanceId, Set<SequencedMessageState> state);
 
+    List<SequencedMessage> findAllBySequenceInstanceId(long sequenceInstanceId);
+
+    List<SequencedMessage> findAllByPendingActionIsNotNull();
+
     @Modifying
     @Query(nativeQuery = true, value = "UPDATE sequenced_message SET state = ?2, state_changed_at = NOW() WHERE id = ?1")
     void updateStateById(long sequencedMessageId, String sequencedMessageStateName);
+
+    @Modifying
+    @Query(nativeQuery = true, value = "UPDATE sequenced_message SET pending_action = null WHERE id = ?1")
+    void clearPendingActionById(long sequencedMessageId);
+
+    @Modifying
+    @Query(nativeQuery = true, value = "UPDATE sequenced_message SET state = ?2, state_changed_at = NOW(), pending_action = null WHERE id = ?1")
+    void clearPendingActionById(long sequencedMessageId, String sequencedMessageStateName);
 
     Optional<SequencedMessage> findByMessageTypeAndIdempotenceId(String messageType, String idempotenceId);
 

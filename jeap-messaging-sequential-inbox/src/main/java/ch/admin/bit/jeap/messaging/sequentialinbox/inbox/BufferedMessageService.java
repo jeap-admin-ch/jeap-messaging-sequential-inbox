@@ -7,10 +7,7 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.Sequentia
 import ch.admin.bit.jeap.messaging.sequentialinbox.inbox.BufferedMessageTracing.TraceContextRestorer;
 import ch.admin.bit.jeap.messaging.sequentialinbox.jpa.MessageRepository;
 import ch.admin.bit.jeap.messaging.sequentialinbox.metrics.SequentialInboxMetricsCollector;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.BufferedMessage;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstance;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessage;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessageState;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.*;
 import ch.admin.bit.jeap.messaging.sequentialinbox.spring.SequentialInboxException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +35,13 @@ class BufferedMessageService {
      * @return true if sequence is complete, false otherwise
      */
     boolean processBufferedMessages(SequenceInstance sequenceInstance, Sequence sequence) {
+        return processBufferedMessages(sequenceInstance, sequence, false);
+    }
+
+    /**
+     * @return true if sequence is complete, false otherwise
+     */
+    boolean processBufferedMessages(SequenceInstance sequenceInstance, Sequence sequence, boolean forceProcessAll) {
         List<SequencedMessage> waitingAndProcessedMessages = messageRepository.getWaitingAndProcessedMessagesInNewTransaction(sequenceInstance.getId());
         List<SequencedMessage> waitingMessages = waitingMessagesInModifiableList(waitingAndProcessedMessages);
         Set<String> processedMessageTypes = processedMessageTypes(waitingAndProcessedMessages);
@@ -45,7 +49,7 @@ class BufferedMessageService {
         boolean waitingMessageProcessed;
         do {
             Optional<SequencedMessage> nextWaitingMessageReadyToBeProcessed = waitingMessages.stream()
-                    .filter(sequencedMessage -> sequencedMessageType(sequencedMessage).isReleaseConditionSatisfied(processedMessageTypes))
+                    .filter(sequencedMessage -> forceProcessAll || sequencedMessageType(sequencedMessage).isReleaseConditionSatisfied(processedMessageTypes))
                     .findFirst();
 
             if (nextWaitingMessageReadyToBeProcessed.isPresent()) {
@@ -65,6 +69,21 @@ class BufferedMessageService {
         } while (waitingMessageProcessed);
 
         return sequence.isComplete(processedMessageTypes);
+    }
+
+    void processBufferedMessageWithPendingAction(SequencedMessage sequencedMessage) {
+        log.info("Next waiting message ready to be processed: {}", sequencedMessage);
+
+        if (SequencedMessagePendingAction.CONSUME.equals(sequencedMessage.getPendingAction())){
+            handleBufferedMessage(sequencedMessage);
+            messageRepository.clearPendingActionInNewTransaction(sequencedMessage);
+        } else if (SequencedMessagePendingAction.EXPIRE.equals(sequencedMessage.getPendingAction())) {
+            log.info("Mark message as processed without consuming {}", sequencedMessage);
+            messageRepository.clearPendingActionInNewTransaction(sequencedMessage, SequencedMessageState.PROCESSED);
+        } else {
+            log.warn("Unknown pending action {} for message {}", sequencedMessage.getPendingAction(), sequencedMessage);
+        }
+
     }
 
     private SequencedMessageType sequencedMessageType(SequencedMessage sequencedMessage) {
@@ -128,8 +147,8 @@ class BufferedMessageService {
         return Optional.of(deserializedMessage);
     }
 
-    private void sendMessageToErrorHandlerAndMarkFailed(SequencedMessage sequencedMessage, Exception ex, FailedConsumerRecord record) {
-        errorServiceSender.accept(record, ex);
+    private void sendMessageToErrorHandlerAndMarkFailed(SequencedMessage sequencedMessage, Exception ex, FailedConsumerRecord failedConsumerRecord) {
+        errorServiceSender.accept(failedConsumerRecord, ex);
         messageRepository.setMessageStateInNewTransaction(sequencedMessage, SequencedMessageState.FAILED);
     }
 
