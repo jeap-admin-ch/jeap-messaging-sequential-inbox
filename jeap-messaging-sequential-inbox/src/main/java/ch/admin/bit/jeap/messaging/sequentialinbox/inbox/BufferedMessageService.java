@@ -72,7 +72,7 @@ class BufferedMessageService {
     }
 
     void processBufferedMessageWithPendingAction(SequencedMessage sequencedMessage) {
-        log.info("Next waiting message ready to be processed: {}", sequencedMessage);
+        log.info("SequentialInbox: Next waiting message with pending action ready to be processed: {}", sequencedMessage);
 
         if (SequencedMessagePendingAction.CONSUME.equals(sequencedMessage.getPendingAction())){
             handleBufferedMessage(sequencedMessage);

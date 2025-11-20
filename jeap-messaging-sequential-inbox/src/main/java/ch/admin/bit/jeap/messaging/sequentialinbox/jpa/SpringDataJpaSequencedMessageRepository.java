@@ -2,6 +2,8 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.jpa;
 
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessage;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessageState;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,7 +23,7 @@ interface SpringDataJpaSequencedMessageRepository extends JpaRepository<Sequence
 
     List<SequencedMessage> findAllBySequenceInstanceId(long sequenceInstanceId);
 
-    List<SequencedMessage> findAllByPendingActionIsNotNull();
+    Slice<SequencedMessage> findAllByPendingActionIsNotNull(Pageable pageable);
 
     @Modifying
     @Query(nativeQuery = true, value = "UPDATE sequenced_message SET state = ?2, state_changed_at = NOW() WHERE id = ?1")

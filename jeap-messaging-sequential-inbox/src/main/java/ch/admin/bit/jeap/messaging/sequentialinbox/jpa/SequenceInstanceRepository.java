@@ -6,6 +6,7 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
@@ -88,8 +89,8 @@ public class SequenceInstanceRepository {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    public List<SequenceInstance> findAllByPendingActionIsNotNull() {
-        return springDataJpaSequenceInstanceRepository.findAllByPendingActionIsNotNull();
+    public Slice<SequenceInstance> findAllByPendingActionIsNotNull(Pageable pageable) {
+        return springDataJpaSequenceInstanceRepository.findAllByPendingActionIsNotNull(pageable);
     }
 
     @Transactional(propagation = Propagation.MANDATORY)

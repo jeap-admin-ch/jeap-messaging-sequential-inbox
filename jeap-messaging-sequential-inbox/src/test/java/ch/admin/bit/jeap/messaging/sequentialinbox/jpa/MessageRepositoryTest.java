@@ -9,6 +9,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -423,7 +425,8 @@ class MessageRepositoryTest {
         TestTransaction.flagForCommit();
         TestTransaction.end();
 
-        List<SequencedMessage> result = messageRepository.getMessagesWithPendingAction();
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Slice<SequencedMessage> result = messageRepository.getMessagesWithPendingAction(pageRequest);
 
         assertThat(result)
                 .extracting(SequencedMessage::getId)

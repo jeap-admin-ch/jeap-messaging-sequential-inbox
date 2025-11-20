@@ -37,7 +37,7 @@ public class SequentialInboxController {
             SequenceInstance sequenceInstance = sequenceInstanceOptional.get();
             List<SequencedMessage> messages = messageRepository.findAllBySequenceInstanceId(sequenceInstance.getId());
             List<BufferedMessage> bufferedMessages = messageRepository.findAllBufferedMessagesBySequenceInstanceId(sequenceInstance.getId());
-            log.info("SequentialInbox: Found {} messages for sequence '{}'", messages.size(), sequenceInstance.getId());
+            log.info("SequentialInbox: found {} messages for sequence '{}'", messages.size(), sequenceInstance.getId());
             return ResponseEntity.ok(sequenceInstanceDtoFactory.fromSequenceInstance(sequenceInstance, messages, bufferedMessages));
         }
         return ResponseEntity.notFound().build();
@@ -46,14 +46,14 @@ public class SequentialInboxController {
     @GetMapping("/sequences")
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('sequentialinbox','view')")
-    public Page<SequenceInstance> getExpiredSequences(@RequestParam SequenceInstanceQueryType queryType, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize) {
+    public Page<SequenceInstance> getExpiredSequences(@RequestParam SequenceInstanceQueryType queryType, @RequestParam(required = false, defaultValue = "0") int pageNumber, @RequestParam(required = false, defaultValue = "10") int pageSize) {
         log.info("SequentialInbox: Getting sequences of type {}...", queryType);
         if (SequenceInstanceQueryType.EXPIRED.equals(queryType)) {
-            Page<SequenceInstance> results = sequenceInstanceRepository.findAllExpired(PageRequest.of(Integer.parseInt(pageNumber), Integer.parseInt(pageSize)));
+            Page<SequenceInstance> results = sequenceInstanceRepository.findAllExpired(PageRequest.of(pageNumber, pageSize));
             log.info("SequentialInbox: found {} expired sequences", results.getTotalElements());
             return results;
         } else if (SequenceInstanceQueryType.EXPIRING.equals(queryType)) {
-            Page<SequenceInstance> results = sequenceInstanceRepository.findAllWithRetentionPeriodElapsed75Percent(PageRequest.of(Integer.parseInt(pageNumber), Integer.parseInt(pageSize)));
+            Page<SequenceInstance> results = sequenceInstanceRepository.findAllWithRetentionPeriodElapsed75Percent(PageRequest.of(pageNumber, pageSize));
             log.info("SequentialInbox: found {} expiring sequences", results.getTotalElements());
             return results;
         }
@@ -64,6 +64,7 @@ public class SequentialInboxController {
     @Transactional
     @PreAuthorize("hasRole('sequentialinbox','write')")
     public ResponseEntity<Void> setSequenceInstancePendingAction(@PathVariable long sequenceInstanceId, @RequestParam SequenceInstancePendingAction pendingAction) {
+        log.info("SequentialInbox: Set pending action '{}' to sequence instance with id '{}'", pendingAction, sequenceInstanceId);
         return sequenceInstanceRepository.findById(sequenceInstanceId)
                 .map(sequenceInstance -> {
                     sequenceInstance.setPendingAction(pendingAction);
@@ -76,6 +77,7 @@ public class SequentialInboxController {
     @Transactional
     @PreAuthorize("hasRole('sequentialinbox','write')")
     public ResponseEntity<Void> setSequencedMessagePendingAction(@PathVariable long sequencedMessageId, @RequestParam SequencedMessagePendingAction pendingAction) {
+        log.info("SequentialInbox: Set pending action '{}' to sequenced message with id '{}'", pendingAction, sequencedMessageId);
         return messageRepository.findById(sequencedMessageId)
                 .map(sequencedMessage -> {
                     sequencedMessage.setPendingAction(pendingAction);
@@ -86,6 +88,6 @@ public class SequentialInboxController {
 
     @PostConstruct
     public void init() {
-        log.info("Sequential Inbox REST API Initialized");
+        log.info("SequentialInbox: REST API initialized");
     }
 }

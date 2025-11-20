@@ -1,0 +1,16 @@
+sequences:
+  - name: ThreeSequentialEvents
+    retentionPeriod: 24h
+    messages:
+      - type: JmeDeclarationCreatedEvent
+        contextIdExtractor: ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestContextIdExtractor
+
+      - type: JmeSimpleTestEvent
+        contextIdExtractor: ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestContextIdExtractor
+        releaseCondition:
+          predecessor: JmeDeclarationCreatedEvent
+
+      - type: JmeEnumTestEvent
+        contextIdExtractor: ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestContextIdExtractor
+        releaseCondition:
+          predecessor: JmeSimpleTestEvent

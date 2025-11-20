@@ -224,7 +224,8 @@ class SequenceInstanceRepositoryTest {
         testEntityManager.persist(withConsumeAll);
         testEntityManager.persist(withoutAction);
 
-        var result = sequenceInstanceRepository.findAllByPendingActionIsNotNull();
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        var result = sequenceInstanceRepository.findAllByPendingActionIsNotNull(pageRequest);
         assertThat(result)
                 .extracting(SequenceInstance::getName)
                 .containsExactlyInAnyOrder("pending1", "pending2");
