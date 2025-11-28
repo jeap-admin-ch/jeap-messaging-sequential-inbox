@@ -116,7 +116,7 @@ public class MessageRepository {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    public Map<String, Double> getWaitingMessageCountByType() {
+    public Map<String, Long> getWaitingMessageCountByType() {
         return sequencedMessageRepository.getWaitingMessageCountGroupedByMessageType().stream()
                 .collect(toMap(CountByType::messageType, CountByType::waitingCount));
     }

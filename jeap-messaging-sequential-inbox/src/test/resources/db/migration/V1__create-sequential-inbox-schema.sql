@@ -20,6 +20,7 @@ ALTER TABLE sequence_instance
     ADD CONSTRAINT SEQUENCE_INSTANCE_NAME_CONTEXT_ID_UK UNIQUE (name, context_id);
 
 CREATE INDEX idx_sequence_instance_remove_after ON sequence_instance (remove_after);
+CREATE INDEX idx_sequence_instance_retain_until ON sequence_instance (retain_until);
 
 CREATE TABLE sequenced_message
 (

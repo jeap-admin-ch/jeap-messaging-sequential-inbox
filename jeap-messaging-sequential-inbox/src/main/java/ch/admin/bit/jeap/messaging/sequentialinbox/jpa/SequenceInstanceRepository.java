@@ -14,7 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import static java.util.stream.Collectors.toMap;
 
 @Repository
 @RequiredArgsConstructor
@@ -116,6 +119,18 @@ public class SequenceInstanceRepository {
     @Transactional(readOnly = true)
     public Page<SequenceInstance> findAllWithRetentionPeriodElapsed75Percent(Pageable pageable){
         return springDataJpaSequenceInstanceRepository.findAllWithRetentionPeriodElapsed75Percent(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getSequenceInstancesWithRetainUntilExpiredGroupedBySequenceType(){
+        return springDataJpaSequenceInstanceRepository.getSequenceInstancesWithRetainUntilExpiredGroupedBySequenceType().stream()
+                .collect(toMap(SequenceInstanceCountByType::sequenceType, SequenceInstanceCountByType::count));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getSequenceInstancesExpiringGroupedBySequenceType(double percentile){
+        return springDataJpaSequenceInstanceRepository.getSequenceInstancesExpiringGroupedBySequenceType(percentile).stream()
+                .collect(toMap(SequenceInstanceCountByType::sequenceType, SequenceInstanceCountByType::count));
     }
 
 }

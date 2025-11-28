@@ -27,6 +27,10 @@ class SequentialInboxMetrics implements SequentialInboxMetricsCollector {
     private static final String WAITING_MESSAGES = "jeap.messaging.sequential-inbox.waiting-messages";
     private static final String CONSUMED_MESSAGES = "jeap.messaging.sequential-inbox.consumed-messages";
     private static final String WAITING_MESSAGE_DELAY = "jeap.messaging.sequential-inbox.waiting-message-delay";
+    private static final String EXPIRING_SOON_SEQUENCES = "jeap.messaging.sequential-inbox.expiring-soon-sequences";
+    private static final String RETENTION_PERIOD_EXPIRED_SEQUENCES = "jeap.messaging.sequential-inbox.retention-period-expired-sequences";
+    private static final String DELETED_BY_HOUSEKEEPING_SEQUENCES = "jeap.messaging.sequential-inbox.deleted-by-housekeeping-sequences";
+
     private static final String TYPE_TAG = "type";
 
     private final MeterRegistry meterRegistry;
@@ -36,11 +40,16 @@ class SequentialInboxMetrics implements SequentialInboxMetricsCollector {
     @PostConstruct
     public void initMetrics() {
         persistenceMetrics.updateMetrics();
-        sequencedMessageTypes().forEach(this::registerTypeMetrics);
+        sequencedMessageTypes().forEach(this::registerMetricsByMessageType);
+        sequenceTypes().forEach(this::registerMetricsBySequenceType);
     }
 
-    private void registerTypeMetrics(String type) {
-        meterRegistry.gauge(WAITING_MESSAGES, Tags.of(TYPE_TAG, type), type, persistenceMetrics::getWaitingMessagesOfType);
+    private void registerMetricsByMessageType(String messageType) {
+        meterRegistry.gauge(WAITING_MESSAGES, Tags.of(TYPE_TAG, messageType), messageType, persistenceMetrics::getWaitingMessagesOfType);
+    }
+    private void registerMetricsBySequenceType(String sequenceType) {
+        meterRegistry.gauge(RETENTION_PERIOD_EXPIRED_SEQUENCES, Tags.of(TYPE_TAG, sequenceType), sequenceType, persistenceMetrics::getExpiredSequenceInstancesOfType);
+        meterRegistry.gauge(EXPIRING_SOON_SEQUENCES, Tags.of(TYPE_TAG, sequenceType), sequenceType, persistenceMetrics::getExpiringSequenceInstancesOfType);
     }
 
     @Scheduled(fixedRateString = "${jeap.messaging.sequential-inbox.metrics.update-rate-minutes:5}", timeUnit = MINUTES)
@@ -55,6 +64,12 @@ class SequentialInboxMetrics implements SequentialInboxMetricsCollector {
     }
 
     @Override
+    public void onSequenceInstanceDeletedByHousekeeping(String sequenceType, int amount) {
+        meterRegistry.counter(DELETED_BY_HOUSEKEEPING_SEQUENCES, TYPE_TAG, sequenceType)
+                .increment(amount);
+    }
+
+    @Override
     public void onConsumedSequencedMessage(String messageType) {
         meterRegistry.counter(CONSUMED_MESSAGES, TYPE_TAG, messageType)
                 .increment();
@@ -63,5 +78,8 @@ class SequentialInboxMetrics implements SequentialInboxMetricsCollector {
     private Stream<String> sequencedMessageTypes() {
         return config.getSequencedMessageTypes().stream()
                 .map(SequencedMessageType::getQualifiedName);
+    }
+    private Stream<String> sequenceTypes() {
+        return config.getSequenceTypes().stream();
     }
 }

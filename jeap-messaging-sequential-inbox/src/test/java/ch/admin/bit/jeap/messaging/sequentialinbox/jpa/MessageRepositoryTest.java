@@ -252,11 +252,11 @@ class MessageRepositoryTest {
         messageRepository.saveMessage(null, otherTypeWaitingMessage);
         messageRepository.saveMessage(null, processedMessage);
 
-        Map<String, Double> countByType = messageRepository.getWaitingMessageCountByType();
+        Map<String, Long> countByType = messageRepository.getWaitingMessageCountByType();
 
         assertThat(countByType)
-                .containsEntry("type", 1.0)
-                .containsEntry("otherType", 1.0)
+                .containsEntry("type", 1L)
+                .containsEntry("otherType", 1L)
                 .hasSize(2);
     }
 
