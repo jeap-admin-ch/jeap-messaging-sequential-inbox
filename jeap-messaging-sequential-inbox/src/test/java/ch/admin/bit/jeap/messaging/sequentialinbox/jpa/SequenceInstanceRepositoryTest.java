@@ -22,6 +22,7 @@ import org.testcontainers.junit.jupiter.Container;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -301,10 +302,67 @@ class SequenceInstanceRepositoryTest {
 
     }
 
-    private void saveSequenceInstance(long id, String name, int createdAtDelay, int retainUntil) {
+    @Test
+    void getSequenceInstancesExpiringGroupedBySequenceType() {
+        long id = 688770L;
+        // Instance with 80% retention elapsed
+        saveSequenceInstance(id, "elapsed80", 80, 20);
+
+        // Instance with 55% retention elapsed
+        saveSequenceInstance(++id, "elapsed55", "ctx1", 55, 45);
+        saveSequenceInstance(++id, "elapsed55", "ctx2", 55, 45);
+
+        // Instance with 100% retention elapsed
+        saveSequenceInstance(++id, "elapsed100", 100, 0);
+
+        // Instance with 0% retention elapsed
+        saveSequenceInstance(++id, "elapsed0", 0, 100);
+
+        Map<String, Long> result = sequenceInstanceRepository.getSequenceInstancesExpiringGroupedBySequenceType(0.5);
+
+        assertThat(result.keySet()).hasSize(2);
+        assertThat(result)
+                .containsEntry("elapsed80", 1L)
+                .containsEntry("elapsed55", 2L);
+
+        result = sequenceInstanceRepository.getSequenceInstancesExpiringGroupedBySequenceType(0.78);
+
+        assertThat(result.keySet()).hasSize(1);
+        assertThat(result)
+                .containsEntry("elapsed80", 1L);
+
+    }
+
+    @Test
+    void getSequenceInstancesWithRetainUntilExpiredGroupedBySequenceType() {
+        long id = 698770L;
+        // Instance with 80% retention elapsed
+        saveSequenceInstance(id, "elapsed80", 80, 20);
+
+        // Instance with 55% retention elapsed
+        saveSequenceInstance(++id, "elapsed55", 55, 45);
+
+        // Instance with 100% retention elapsed
+        saveSequenceInstance(++id, "elapsed100_1", "ctx1",100, 0);
+        saveSequenceInstance(++id, "elapsed100_2", "ctx1",100, 0);
+        saveSequenceInstance(++id, "elapsed100_2", "ctx2",100, 0);
+
+        // Instance with 0% retention elapsed
+        saveSequenceInstance(++id, "elapsed0", 0, 100);
+
+        Map<String, Long> result = sequenceInstanceRepository.getSequenceInstancesWithRetainUntilExpiredGroupedBySequenceType();
+
+        assertThat(result.keySet()).hasSize(2);
+        assertThat(result)
+                .containsEntry("elapsed100_1", 1L)
+                .containsEntry("elapsed100_2", 2L);
+
+    }
+
+    private void saveSequenceInstance(long id, String name, String contextId, int createdAtDelay, int retainUntil) {
         SequenceInstance sequenceInstance = SequenceInstance.builder()
                 .name(name)
-                .contextId("ctx1")
+                .contextId(contextId)
                 .state(SequenceInstanceState.OPEN)
                 .retentionPeriod(Duration.ofMinutes(1))
                 .build();
@@ -314,6 +372,9 @@ class SequenceInstanceRepositoryTest {
         testEntityManager.persist(sequenceInstance);
     }
 
+    private void saveSequenceInstance(long id, String name, int createdAtDelay, int retainUntil) {
+        saveSequenceInstance(id, name, "ctx1", createdAtDelay, retainUntil);
+    }
 
     private void saveSequenceInstance(long id, String name, Duration retentionPeriod) {
         SequenceInstance sequenceInstance = SequenceInstance.builder()

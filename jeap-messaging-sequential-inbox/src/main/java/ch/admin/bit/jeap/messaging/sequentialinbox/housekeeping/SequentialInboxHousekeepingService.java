@@ -3,8 +3,10 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.housekeeping;
 import ch.admin.bit.jeap.messaging.sequentialinbox.inbox.*;
 import ch.admin.bit.jeap.messaging.sequentialinbox.jpa.MessageRepository;
 import ch.admin.bit.jeap.messaging.sequentialinbox.jpa.SequenceInstanceRepository;
+import ch.admin.bit.jeap.messaging.sequentialinbox.metrics.SequentialInboxMetricsCollector;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.BufferedMessage;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstance;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstanceState;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessage;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ public class SequentialInboxHousekeepingService {
     private final HouseKeepingConfigProperties houseKeepingConfigProperties;
     private final ErrorHandlingService errorHandlingService;
     private final Transactions transactions;
+    private final SequentialInboxMetricsCollector metricsCollector;
 
     /**
      * Scheduled task that runs every 15min (starting at *:00) by default to clean up sequence instances
@@ -51,7 +54,7 @@ public class SequentialInboxHousekeepingService {
         // Delete in order to respect foreign key constraints
         int messagesDeleted = messageRepository.deleteMessagesForClosedSequences();
         int sequenceInstancesDeleted = sequenceInstanceRepository.deleteAllClosed();
-
+        metricsCollector.onSequenceInstanceDeletedByHousekeeping(SequenceInstanceState.CLOSED.name(), sequenceInstancesDeleted);
         log.info("Sequential inbox housekeeping completed: deleted {} messages and {} closed sequence instances",
                 messagesDeleted, sequenceInstancesDeleted);
     }
@@ -90,6 +93,7 @@ public class SequentialInboxHousekeepingService {
         log.debug("Starting housekeeping task: deleting sequence instances ready for removal until {}.", stopAt);
         int deletedSequencesTotal = deleteSequencesReadyForRemovalInBatches(stopAt);
         ZonedDateTime endedAt = ZonedDateTime.now();
+        metricsCollector.onSequenceInstanceDeletedByHousekeeping(SequenceInstanceState.OPEN.name(), deletedSequencesTotal);
         log.debug("Sequential inbox housekeeping task stopped deleting sequence instances ready for removal at {}. " +
                   "Deleted {} sequence instances in {}.", endedAt, deletedSequencesTotal, Duration.between(startedAt, endedAt));
     }

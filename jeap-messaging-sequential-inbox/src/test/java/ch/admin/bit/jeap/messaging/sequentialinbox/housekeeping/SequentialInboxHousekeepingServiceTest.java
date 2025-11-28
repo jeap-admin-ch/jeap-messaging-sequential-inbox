@@ -4,8 +4,10 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.inbox.ErrorHandlingService;
 import ch.admin.bit.jeap.messaging.sequentialinbox.inbox.Transactions;
 import ch.admin.bit.jeap.messaging.sequentialinbox.jpa.MessageRepository;
 import ch.admin.bit.jeap.messaging.sequentialinbox.jpa.SequenceInstanceRepository;
+import ch.admin.bit.jeap.messaging.sequentialinbox.metrics.SequentialInboxMetricsCollector;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.BufferedMessage;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstance;
+import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstanceState;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,9 +48,10 @@ class SequentialInboxHousekeepingServiceTest {
                                                                       SequenceInstanceRepository sequenceInstanceRepository,
                                                                       HouseKeepingConfigProperties configProperties,
                                                                       ErrorHandlingService errorHandlingService,
-                                                                      Transactions transactions) {
+                                                                      Transactions transactions,
+                                                                      SequentialInboxMetricsCollector metricsCollector) {
             return new SequentialInboxHousekeepingService(messageRepository, sequenceInstanceRepository,
-                    configProperties, errorHandlingService, transactions);
+                    configProperties, errorHandlingService, transactions, metricsCollector);
         }
 
         @Bean
@@ -73,8 +76,12 @@ class SequentialInboxHousekeepingServiceTest {
     @MockitoBean
     private PlatformTransactionManager platformTransactionManager;
 
+    @MockitoBean
+    private SequentialInboxMetricsCollector metricsCollector;
+
     @Test
     void shouldAutomaticallyDeleteClosedSequenceInstancesOnSchedule() {
+        when(sequenceInstanceRepository.deleteAllClosed()).thenReturn(1);
         await()
                 .atMost(30, TimeUnit.SECONDS)
                 .pollInterval(100, TimeUnit.MILLISECONDS)
@@ -82,6 +89,7 @@ class SequentialInboxHousekeepingServiceTest {
                     verify(messageRepository, atLeast(1)).deleteMessagesForClosedSequences();
                     verify(sequenceInstanceRepository, atLeast(1)).deleteAllClosed();
                 });
+        verify(metricsCollector).onSequenceInstanceDeletedByHousekeeping(SequenceInstanceState.CLOSED.name(), 1);
     }
 
     @Test
@@ -162,6 +170,9 @@ class SequentialInboxHousekeepingServiceTest {
         verify(sequenceInstanceRepository).deleteNotClosedById(readyForRemovalInstanceSequenceId);
         verify(sequenceInstanceRepository).deleteNotClosedById(noBufferedMessagesInstanceSequenceId);
         verify(sequenceInstanceRepository).deleteNotClosedById(noMessagesInstanceSequenceId);
+
+        // Verify that metrics were recorded
+        verify(metricsCollector).onSequenceInstanceDeletedByHousekeeping(SequenceInstanceState.OPEN.name(), 3);
     }
 
     private SequenceInstance mockSequenceInstance(long id) {

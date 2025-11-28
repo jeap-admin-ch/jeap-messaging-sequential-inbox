@@ -49,6 +49,12 @@
       "type": "java.lang.Integer"
     },
     {
+      "name": "jeap.messaging.sequential-inbox.metrics.expiring-percentile",
+      "description": "The percentile used to calculate the 'expiring soon' metric for sequence instances. For example, a value of 0.75 means sequence instances with 75% of their retention period elapsed are considered 'expiring soon'.",
+      "defaultValue": 0.75,
+      "type": "java.lang.Double"
+    },
+    {
       "name": "jeap.messaging.sequential-inbox.sequencing-start-timestamp",
       "description": "Timestamp from which the sequencing should effectively start. Once this parameter is configured, the recording mode will be activated.",
       "type": "java.time.LocalDateTime"

@@ -12,6 +12,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [12.1.0] - 2025-11-28
+### Changed
+- Add new metrics for expiring and expired sequence instances 
+- Add new metrics for deleted sequence instances by housekeeping scheduler
+- Add new index to improve performance of metrics queries. See the file
+  [./jeap-messaging-sequential-inbox-test/src/test/resources/db/migration/V4__add-retain_until-index-to-sequence_instance.sql]
+  for a DDL script that performs the schema upgrade from version 12.0.0 to version 12.1.0.
+
+
 ## [12.0.0] - 2025-11-21
 ### Changed
 - Add new pending action to sequence instance and sequenced message in order to support devOps operations

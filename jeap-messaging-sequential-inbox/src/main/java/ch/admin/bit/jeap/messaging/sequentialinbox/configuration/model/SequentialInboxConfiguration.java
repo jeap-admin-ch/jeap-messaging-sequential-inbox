@@ -60,6 +60,12 @@ public class SequentialInboxConfiguration {
                 .collect(toSet());
     }
 
+    public Set<String> getSequenceTypes() {
+        return sequences.stream()
+                .map(Sequence::getName)
+                .collect(toSet());
+    }
+
     public int getSequenceCount() {
         return sequences.size();
     }

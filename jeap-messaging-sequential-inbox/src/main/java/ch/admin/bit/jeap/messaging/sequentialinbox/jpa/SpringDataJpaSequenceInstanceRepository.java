@@ -64,6 +64,15 @@ interface SpringDataJpaSequenceInstanceRepository extends JpaRepository<Sequence
     @Query(nativeQuery = true, value = "SELECT * from sequence_instance where created_at + (0.75 * EXTRACT(EPOCH FROM retain_until - created_at)) * INTERVAL '1 second' < now()")
     Page<SequenceInstance> findAllWithRetentionPeriodElapsed75Percent(Pageable pageable);
 
+    @Query(nativeQuery = true, value = "SELECT name as sequenceType, COUNT(*) as count from sequence_instance where retain_until < now() GROUP BY name")
+    List<SequenceInstanceCountByType> getSequenceInstancesWithRetainUntilExpiredGroupedBySequenceType();
+
+    @Query(nativeQuery = true, value = "SELECT name as sequenceType, COUNT(*) as count from sequence_instance " +
+                                       "where created_at + (:percentile * EXTRACT(EPOCH FROM retain_until - created_at)) * INTERVAL '1 second' < now() " +
+                                       "AND retain_until > now() " +
+                                       "GROUP BY name")
+    List<SequenceInstanceCountByType> getSequenceInstancesExpiringGroupedBySequenceType(double percentile);
+
     Page<SequenceInstance> findAllByRetainUntilBefore(ZonedDateTime retainUntilBefore, Pageable pageable);
 
     Optional<SequenceInstance> findByNameAndContextId(String name, String contextId);
