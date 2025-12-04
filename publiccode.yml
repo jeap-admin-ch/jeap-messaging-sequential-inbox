@@ -1,8 +1,8 @@
 publiccodeYmlVersion: 0.4.0
 name: jeap-messaging-sequential-inbox
 applicationSuite: jEAP
-softwareVersion: 14.0.0
-releaseDate: 2025-12-03
+softwareVersion: 14.1.0
+releaseDate: 2025-12-04
 url: "https://github.com/jeap-admin-ch/jeap-messaging-sequential-inbox.git"
 landingURL: "https://github.com/jeap-admin-ch/jeap"
 platforms:
