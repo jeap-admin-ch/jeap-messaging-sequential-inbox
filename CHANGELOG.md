@@ -19,6 +19,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - updated springdoc-openapi from 2.8.13 to 2.8.15
 - update jeap-spring-boot-security-starter from 19.8.0 to 19.9.0
 - updated wiremock from 3.13.1 to 3.13.2
+- ignore Sonar warnings in tests (MojoRule and AbstractMojoTestCase is deprecated) for the moment, java:S1874
+- update jeap-messaging from 11.7.0 to 11.8.1
 
 ## [14.7.0] - 2026-01-07
 
