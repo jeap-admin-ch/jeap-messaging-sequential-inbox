@@ -27,7 +27,7 @@
 
     <artifactId>jeap-messaging-sequential-inbox-parent</artifactId>
     <name>${project.groupId}:${project.artifactId}</name>
-    <version>14.10.0-SNAPSHOT</version>
+    <version>14.11.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
@@ -45,7 +45,7 @@
     <properties>
         <maven.javadoc.skip>false</maven.javadoc.skip>
         <jeap-messaging.version>11.10.0</jeap-messaging.version>
-        <jeap-spring-boot-security-starter.version>19.10.0</jeap-spring-boot-security-starter.version>
+        <jeap-spring-boot-security-starter.version>19.11.0</jeap-spring-boot-security-starter.version>
     </properties>
 
     <dependencyManagement>
