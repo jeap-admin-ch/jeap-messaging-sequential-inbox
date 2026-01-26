@@ -4,6 +4,7 @@ import ch.admin.bit.jeap.messaging.avro.AvroMessage;
 import ch.admin.bit.jeap.messaging.avro.AvroMessageKey;
 import ch.admin.bit.jeap.messaging.avro.MessageTypeMetadata;
 import ch.admin.bit.jeap.messaging.kafka.contract.ContractsValidator;
+import ch.admin.bit.jeap.messaging.kafka.filter.ErrorHandlingTargetFilter;
 import ch.admin.bit.jeap.messaging.kafka.properties.KafkaProperties;
 import ch.admin.bit.jeap.messaging.kafka.spring.JeapKafkaBeanNames;
 import ch.admin.bit.jeap.messaging.sequentialinbox.inbox.SequentialInboxService;
@@ -11,11 +12,13 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.spring.SequentialInboxExcepti
 import ch.admin.bit.jeap.messaging.sequentialinbox.spring.SequentialInboxMessageHandler;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.listener.AcknowledgingMessageListener;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -32,15 +35,17 @@ public class KafkaSequentialInboxMessageConsumerFactory {
     private final JeapKafkaBeanNames jeapKafkaBeanNames;
     private final SequentialInboxService sequentialInboxService;
     private final ContractsValidator contractsValidator;
+    private final ErrorHandlingTargetFilter errorHandlingTargetFilter;
 
     private final List<ConcurrentMessageListenerContainer<AvroMessageKey, AvroMessage>> containers = new CopyOnWriteArrayList<>();
 
-    public KafkaSequentialInboxMessageConsumerFactory(KafkaProperties kafkaProperties, BeanFactory beanFactory, SequentialInboxService sequentialInboxService, ContractsValidator contractsValidator) {
+    public KafkaSequentialInboxMessageConsumerFactory(KafkaProperties kafkaProperties, BeanFactory beanFactory, SequentialInboxService sequentialInboxService, ContractsValidator contractsValidator, ErrorHandlingTargetFilter errorHandlingTargetFilter) {
         this.kafkaProperties = kafkaProperties;
         this.beanFactory = beanFactory;
         this.jeapKafkaBeanNames = new JeapKafkaBeanNames(kafkaProperties.getDefaultClusterName());
         this.sequentialInboxService = sequentialInboxService;
         this.contractsValidator = contractsValidator;
+        this.errorHandlingTargetFilter = errorHandlingTargetFilter;
     }
 
     public void startConsumer(String topicName, String messageType, String clusterName, SequentialInboxMessageHandler messageHandler) {
@@ -74,16 +79,39 @@ public class KafkaSequentialInboxMessageConsumerFactory {
     }
 
     private void startConsumer(String topicName, String clusterName, AcknowledgingMessageListener<AvroMessageKey, AvroMessage> messageListener) {
-        ConcurrentMessageListenerContainer<AvroMessageKey, AvroMessage> container =
-                getKafkaListenerContainerFactory(clusterName).createContainer(topicName);
+        ConcurrentKafkaListenerContainerFactory<AvroMessageKey, AvroMessage> kafkaListenerContainerFactory = getKafkaListenerContainerFactory(clusterName);
+        ConcurrentMessageListenerContainer<AvroMessageKey, AvroMessage> container = kafkaListenerContainerFactory.createContainer(topicName);
         // The inbox invokes the JeapKafkaMessageCallback explicitly, avoid duplicate invocations by the interceptor
         // The inbox does not support record interceptors in general as buffered records might be consumed/buffered by
         // the inbox and not by the application's business logic. The inbox will then invoke the message handler as
         // soon as the release condition for the message is satisfied.
         container.setRecordInterceptor(null);
-        container.setupMessageListener(messageListener);
+        // setupMessageListener bypasses the listener adapter so we need to set the filter programmatically
+        AcknowledgingMessageListener<AvroMessageKey, AvroMessage> filteredListener = createFilteredListener(messageListener);
+
+        container.setupMessageListener(filteredListener);
         container.start();
         containers.add(container);
+    }
+
+    private AcknowledgingMessageListener<AvroMessageKey, AvroMessage> createFilteredListener(
+            AcknowledgingMessageListener<AvroMessageKey, AvroMessage> delegate) {
+
+        return (ConsumerRecord<AvroMessageKey, AvroMessage> data, Acknowledgment acknowledgment) -> {
+            // Apply filter
+            @SuppressWarnings("unchecked")
+            ConsumerRecord<Object, Object> objectRecord = (ConsumerRecord<Object, Object>) (ConsumerRecord<?, ?>) data;
+            if (errorHandlingTargetFilter.filter(objectRecord)) {
+                // Message filtered out - acknowledge it
+                if (acknowledgment != null) {
+                    acknowledgment.acknowledge();
+                }
+                return;
+            }
+
+            // Pass to actual listener
+            delegate.onMessage(data, acknowledgment);
+        };
     }
 
     @SuppressWarnings("unchecked")
