@@ -1,4 +1,4 @@
-publiccodeYmlVersion: 0.4.0
+publiccodeYmlVersion: 0.5.0
 name: jeap-messaging-sequential-inbox
 applicationSuite: jEAP
 softwareVersion: 14.15.0
@@ -17,9 +17,7 @@ organisation:
 description:
   en:
     localisedName: jeap-messaging-sequential-inbox
-    shortDescription: >
-      A jEAP library that ensures Kafka messages are processed in a predefined sequence,
-      regardless of the order in which they are received.
+    shortDescription: This library lets microservices control message processing order, even when it differs from the order messages are received.
     longDescription: >
       The jEAP Sequential Inbox is a library for microservices that require strict
       ordering of message processing. It consumes messages from Kafka topics and applies
