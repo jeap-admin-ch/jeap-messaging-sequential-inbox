@@ -15,8 +15,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [14.18.0] - 2026-03-02
 
 ### Changed
-
 - Update parent from 5.18.0 to 5.19.0
+- update jeap-spring-boot-security-starter from 19.14.0 to 19.15.0
 
 ## [14.17.0] - 2026-02-25
 ### Changed
