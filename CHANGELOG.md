@@ -16,6 +16,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - update jeap-spring-boot-security-starter from 20.1.0 to 20.2.0
 - Added support for a different set of semantic role parts separators.
+- update jeap-spring-boot-vault-starter from 20.1.0 to 20.2.0
+- update jeap-crypto from 6.1.0 to 6.2.0
+- update jeap-messaging from 12.1.0 to 12.2.0
 
 ## [15.1.0] - 2026-03-12
 
