@@ -38,7 +38,7 @@ class SequenceInstanceRepositoryTest {
 
     @Container
     @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine");
 
     @EnableJpaRepositories
     @EntityScan(basePackageClasses = SequenceInstance.class)
