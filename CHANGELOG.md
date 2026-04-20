@@ -12,6 +12,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [16.5.0] - 2026-04-20
+### Changed
+- update jeap-spring-boot-security-starter from 21.3.0 to 21.4.0
+- Update parent from 6.0.3 to 7.0.0-alpha-springboot4
+
 ## [16.4.0] - 2026-04-16
 
 ### Changed
