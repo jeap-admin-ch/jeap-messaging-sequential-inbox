@@ -40,6 +40,11 @@
             <version>${jeap-spring-boot-security-starter.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 

@@ -1,12 +1,15 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.api;
 
 import ch.admin.bit.jeap.security.test.resource.configuration.ServletJeapAuthorizationConfig;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ComponentScan
+@ImportAutoConfiguration({ServletWebSecurityAutoConfiguration.class})
 class RestApiTestContext extends ServletJeapAuthorizationConfig {
 
     // You have to provide the system name and the application context to the test support base class.

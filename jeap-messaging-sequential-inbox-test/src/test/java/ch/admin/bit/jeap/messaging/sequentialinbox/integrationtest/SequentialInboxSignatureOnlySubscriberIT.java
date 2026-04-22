@@ -5,7 +5,7 @@ import ch.admin.bit.jeap.messaging.kafka.errorhandling.ErrorSerializedMessageHol
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
+import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfigureMetrics;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -18,7 +18,7 @@ import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.messag
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DirtiesContext
-@AutoConfigureObservability
+@AutoConfigureMetrics
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {"spring.application.name=jme-messaging-receiverpublisher-outbox-service"})
 @Slf4j
