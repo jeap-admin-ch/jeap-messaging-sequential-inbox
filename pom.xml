@@ -27,7 +27,7 @@
 
     <artifactId>jeap-messaging-sequential-inbox-parent</artifactId>
     <name>${project.groupId}:${project.artifactId}</name>
-    <version>17.0.0-alpha-springboot4-SNAPSHOT</version>
+    <version>17.0.1-alpha-springboot4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>

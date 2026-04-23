@@ -10,6 +10,7 @@ import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.record.TimestampType;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.kafka.support.KafkaUtils;
 import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.kafka.support.serializer.SerializationUtils;
 
@@ -39,8 +40,8 @@ class Deserializers {
 
     private static void checkDeserException(boolean isKey, Headers headers) {
         String headerName = isKey ?
-                SerializationUtils.KEY_DESERIALIZER_EXCEPTION_HEADER :
-                SerializationUtils.VALUE_DESERIALIZER_EXCEPTION_HEADER;
+                KafkaUtils.KEY_DESERIALIZER_EXCEPTION_HEADER :
+                KafkaUtils.VALUE_DESERIALIZER_EXCEPTION_HEADER;
         if (headers.lastHeader(headerName) != null) {
             throwDeserExceptionIfFound(headers, headerName);
         }
