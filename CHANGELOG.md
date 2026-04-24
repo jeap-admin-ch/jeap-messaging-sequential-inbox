@@ -17,6 +17,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - Update parent from 7.0.4-alpha-springboot4 to 7.0.5-alpha-springboot4
 - update jeap-spring-boot-security-starter from 22.0.0-alpha-springboot4 to 22.1.0-alpha-springboot4
+- update jeap-spring-boot-vault-starter from 21.3.0 to 22.1.0-alpha-springboot4
+- update jeap-crypto from 8.0.0-alpha-springboot4 to 8.1.0-alpha-springboot4
+- Update parent from 7.0.3-alpha-springboot4 to 7.0.5-alpha-springboot4
+- update jeap-messaging from 14.0.0-alpha-springboot4 to 14.1.0-alpha-springboot4
+- Update parent from 7.0.2-alpha-springboot4 to 7.0.5-alpha-springboot4
+- update jeap-spring-boot-roles-anywhere-starter from 2.0.0-alpha-springboot4 to 2.1.0-alpha-springboot4
 
 ## [17.0.0] - 2026-xx-xx
 
