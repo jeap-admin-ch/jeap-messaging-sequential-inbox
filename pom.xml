@@ -44,7 +44,7 @@
 
     <properties>
         <maven.javadoc.skip>false</maven.javadoc.skip>
-        <jeap-messaging.version>14.1.0-alpha-springboot4</jeap-messaging.version>
+        <jeap-messaging.version>14.2.0-alpha-springboot4</jeap-messaging.version>
         <jeap-spring-boot-security-starter.version>22.2.0-alpha-springboot4</jeap-spring-boot-security-starter.version>
     </properties>
 
