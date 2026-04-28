@@ -2,6 +2,7 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest;
 
 import ch.admin.bit.jeap.messaging.avro.AvroMessageKey;
 import ch.admin.bit.jeap.messaging.avro.errorevent.MessageProcessingFailedEvent;
+import ch.admin.bit.jeap.messaging.kafka.tracing.TraceContextScope;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.DeclarationCreatedEventListener;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.MultipleTestEventListener;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages;
@@ -182,6 +183,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
                                 .isGreaterThanOrEqualTo(0));
     }
 
+    @SuppressWarnings("SameParameterValue")
     private <T> Optional<T> findMeter(Class<T> meterClass, String meterName, String messageType) {
         return meterRegistry.getMeters().stream()
                 .filter(meter -> meterName.equals(meter.getId().getName()))
@@ -196,19 +198,21 @@ class SequentialInboxIT extends SequentialInboxITBase {
         UUID contextId = randomContextId();
         JmeSimpleTestEvent successorEvent = createJmeSimpleTestEvent(contextId);
 
-        // when: sending the successor event
-        setTraceContext(123L);
-        sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, successorEvent);
+        // when: sending the successor event with an unsampled trace so we can verify the decision survives replay
+        try (TraceContextScope ignored = setTraceContext(123L, Boolean.FALSE)) {
+            sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, successorEvent);
+        }
 
         // then: assert that the event was buffered and not yet consumed by the message listener
         assertMessageCountHandledByInbox(1);
         assertMessageNotConsumedByListener(successorEvent);
         assertMessageStateWaitingAndBuffered(successorEvent);
 
-        // when: sending the predecessor event for the same context ID
+        // when: sending the predecessor event for the same context ID with a sampled trace
         JmeDeclarationCreatedEvent predecessorEvent = createDeclarationCreatedEvent(contextId);
-        setTraceContext(456L);
-        sendSync(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, predecessorEvent);
+        try (TraceContextScope ignored = setTraceContext(456L, Boolean.TRUE)) {
+            sendSync(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, predecessorEvent);
+        }
 
         // then: assert that the predecessor event was consumed by the message listener
         assertMessageCountHandledByInbox(2);
@@ -224,6 +228,10 @@ class SequentialInboxIT extends SequentialInboxITBase {
         // then: assert that the trace context ID of the original message was set in the listener
         assertTraceContextId(456L, predecessorEvent);
         assertTraceContextId(123L, successorEvent);
+
+        // then: assert that the original sampling decision was preserved through buffered-message replay
+        assertSampled(Boolean.TRUE, predecessorEvent);
+        assertSampled(Boolean.FALSE, successorEvent);
     }
 
     @Test

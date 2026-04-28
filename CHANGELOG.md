@@ -15,6 +15,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [17.3.0-alpha-springboot4] - 2026-04-28
+
+### Changed
+
+Tracing stack migrated from Brave/Zipkin to OpenTelemetry.
+
+### Breaking — schema migration required in downstream services
+
+- New column `sampled boolean` on `sequenced_message`. Needed so the sampling decision captured from the origin
+  trace is preserved when a buffered message is released through `BufferedMessageService`.
+- Downstream services must ship a Flyway migration of the form:
+  ```sql
+  ALTER TABLE sequenced_message ADD COLUMN sampled boolean;
+  ```
+  See `jeap-messaging-sequential-inbox-test/src/test/resources/db/migration/V5__add-sampled-to-sequenced-message.sql`
+  for the reference delta used by this library's own integration tests. Rows written by previous versions carry
+  `NULL` and are treated as sampled on replay (legacy-compatible default).
+
 ## [17.2.0-alpha-springboot4] - 2026-04-24
 
 ### Changed

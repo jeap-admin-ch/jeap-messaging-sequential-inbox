@@ -37,6 +37,7 @@ CREATE TABLE sequenced_message
     span_id              bigint,
     parent_span_id       bigint,
     trace_id_string      text,
+    sampled              boolean,
     created_at           timestamp with time zone NOT NULL,
     state_changed_at     timestamp with time zone,
     sequence_instance_id bigint references sequence_instance,

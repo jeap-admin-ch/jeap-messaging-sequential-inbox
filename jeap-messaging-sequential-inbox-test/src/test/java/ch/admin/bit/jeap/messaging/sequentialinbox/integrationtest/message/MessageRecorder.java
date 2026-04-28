@@ -27,11 +27,13 @@ public class MessageRecorder {
     @Getter
     private final List<Object> recordedErrorEvents = new ArrayList<>();
     private final Map<String, Long> traceContextIds = new HashMap<>();
+    private final Map<String, Boolean> traceContextSampled = new HashMap<>();
     private final Map<String, AvroMessageKey> keyByMessageId = new HashMap<>();
 
     public void reset() {
         recordedMessages.clear();
         traceContextIds.clear();
+        traceContextSampled.clear();
         keyByMessageId.clear();
         recordedErrorEvents.clear();
     }
@@ -39,7 +41,10 @@ public class MessageRecorder {
     synchronized void recordMessage(AvroMessage message) {
         log.info("Message {} handled in listener", message.getIdentity().getId());
         recordedMessages.add(message);
-        traceContextIds.put(message.getIdentity().getId(), traceContextProvider.getTraceContext().getTraceId());
+        var ctx = traceContextProvider.getTraceContext();
+        var id = message.getIdentity().getId();
+        traceContextIds.put(id, ctx.getTraceId());
+        traceContextSampled.put(id, ctx.getSampled());
     }
 
     public void recordMessage(AvroMessageKey key, AvroMessage message) {
@@ -68,6 +73,14 @@ public class MessageRecorder {
         assertThat(actualTraceId)
                 .describedAs("Expected trace ID for message %s", message)
                 .isEqualTo(expectedTraceId);
+    }
+
+    public void assertSampledForMessage(Boolean expectedSampled, AvroMessage message) {
+        Boolean actualSampled = traceContextSampled.get(message.getIdentity().getId());
+
+        assertThat(actualSampled)
+                .describedAs("Expected sampled flag for message %s", message)
+                .isEqualTo(expectedSampled);
     }
 
     @TestKafkaListener(topics = "${jeap.messaging.kafka.error-topic-name}")

@@ -30,7 +30,7 @@ public class SequentialInboxTraceContext {
     @Column(name = "trace_id_string")
     private String traceIdString;
 
-    public static SequentialInboxTraceContext empty() {
-        return new SequentialInboxTraceContext();
-    }
+    @Column(name = "sampled")
+    private Boolean sampled;
+
 }

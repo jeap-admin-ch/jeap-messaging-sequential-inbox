@@ -4,7 +4,7 @@ import ch.admin.bit.jeap.messaging.kafka.errorhandling.ErrorServiceSender;
 import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.Sequence;
 import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.SequencedMessageType;
 import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.SequentialInboxConfiguration;
-import ch.admin.bit.jeap.messaging.sequentialinbox.inbox.BufferedMessageTracing.TraceContextRestorer;
+import ch.admin.bit.jeap.messaging.kafka.tracing.TraceContextScope;
 import ch.admin.bit.jeap.messaging.sequentialinbox.jpa.MessageRepository;
 import ch.admin.bit.jeap.messaging.sequentialinbox.metrics.SequentialInboxMetricsCollector;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.*;
@@ -94,7 +94,7 @@ class BufferedMessageService {
      * @return true if the message was successfully handled, false otherwise
      */
     private boolean handleBufferedMessage(SequencedMessage sequencedMessage) {
-        try (TraceContextRestorer ignored = bufferedMessageTracing.updateCurrentTraceContext(sequencedMessage.getTraceContext())) {
+        try (TraceContextScope ignored = bufferedMessageTracing.updateCurrentTraceContext(sequencedMessage.getTraceContext())) {
             Optional<DeserializedMessage> deserializedMessage = getDeserializedMessage(sequencedMessage);
             if (deserializedMessage.isEmpty()) {
                 log.debug("Deserialization failed for message {}", sequencedMessage);

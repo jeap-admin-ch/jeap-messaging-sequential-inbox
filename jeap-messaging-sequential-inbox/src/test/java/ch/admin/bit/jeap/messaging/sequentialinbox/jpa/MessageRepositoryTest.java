@@ -414,6 +414,24 @@ class MessageRepositoryTest {
     }
 
     @Test
+    void traceContext_roundTripsNull_whenNoneWasCapturedAtPersistTime() {
+        // The null-trace-context contract is what BufferedMessageTracing relies on: if no span was active at
+        // capture time, the embeddable must come back null on read so replay does not activate a synthetic
+        // zeroed SpanContext. Hibernate's default for @Embedded with all-null columns is to materialize null,
+        // governed by hibernate.create_empty_composites.enabled (default false).
+        long sequenceInstanceId = createAndPersistSequenceInstance();
+        SequencedMessage sequencedMessage = createSequencedMessageWithTraceContext(sequenceInstanceId, null);
+        messageRepository.saveMessage(null, sequencedMessage);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+        SequencedMessage reloaded = testEntityManager.find(SequencedMessage.class, sequencedMessage.getId());
+        assertThat(reloaded.getTraceContext()).isNull();
+        TestTransaction.end();
+    }
+
+    @Test
     void getMessagesWithPendingAction_returnsMessagesWithPendingAction() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage messageWithPendingAction = createSequencedMessage(sequenceInstanceId);
@@ -439,6 +457,15 @@ class MessageRepositoryTest {
     }
 
     private static SequencedMessage createSequencedMessage(long instanceId, String type) {
+        return createSequencedMessage(instanceId, type, null);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static SequencedMessage createSequencedMessageWithTraceContext(long instanceId, SequentialInboxTraceContext traceContext) {
+        return createSequencedMessage(instanceId, "type", traceContext);
+    }
+
+    private static SequencedMessage createSequencedMessage(long instanceId, String type, SequentialInboxTraceContext traceContext) {
         return SequencedMessage.builder()
                 .sequenceInstanceId(instanceId)
                 .messageType(type)
@@ -447,6 +474,7 @@ class MessageRepositoryTest {
                 .clusterName("cluster")
                 .topic("topic")
                 .state(SequencedMessageState.WAITING)
+                .traceContext(traceContext)
                 .build();
     }
 

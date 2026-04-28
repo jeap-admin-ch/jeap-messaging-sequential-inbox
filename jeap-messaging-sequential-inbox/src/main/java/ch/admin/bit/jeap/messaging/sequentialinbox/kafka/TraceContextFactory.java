@@ -9,16 +9,18 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class TraceContextFactory {
 
     private final Optional<TraceContextProvider> traceContextProvider;
 
     public SequentialInboxTraceContext currentTraceContext() {
         if (traceContextProvider.isEmpty()) {
-            return SequentialInboxTraceContext.empty();
+            return null;
         }
 
         return createCurrentTraceContext(traceContextProvider.get());
@@ -27,7 +29,7 @@ public class TraceContextFactory {
     private static SequentialInboxTraceContext createCurrentTraceContext(TraceContextProvider traceContextProvider) {
         TraceContext traceContext = traceContextProvider.getTraceContext();
         if (traceContext == null) {
-            return SequentialInboxTraceContext.empty();
+            return null;
         }
 
         return SequentialInboxTraceContext.builder()
@@ -35,6 +37,8 @@ public class TraceContextFactory {
                 .traceId(traceContext.getTraceId())
                 .spanId(traceContext.getSpanId())
                 .parentSpanId(traceContext.getParentSpanId())
-                .traceIdString(traceContext.getTraceIdString()).build();
+                .traceIdString(traceContext.getTraceIdString())
+                .sampled(traceContext.getSampled())
+                .build();
     }
 }

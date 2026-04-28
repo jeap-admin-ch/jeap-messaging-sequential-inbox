@@ -4,6 +4,7 @@ import ch.admin.bit.jeap.messaging.avro.AvroMessage;
 import ch.admin.bit.jeap.messaging.avro.AvroMessageKey;
 import ch.admin.bit.jeap.messaging.kafka.test.KafkaIntegrationTestBase;
 import ch.admin.bit.jeap.messaging.kafka.tracing.TraceContext;
+import ch.admin.bit.jeap.messaging.kafka.tracing.TraceContextScope;
 import ch.admin.bit.jeap.messaging.kafka.tracing.TraceContextUpdater;
 import ch.admin.bit.jeap.messaging.sequentialinbox.inbox.SequentialInboxService;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.MessageRecorder;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfigureMetrics;
+import org.springframework.boot.micrometer.tracing.test.autoconfigure.AutoConfigureTracing;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,6 +47,7 @@ import static org.mockito.Mockito.verify;
 
 @SuppressWarnings({"SqlResolve", "DataFlowIssue", "SqlNoDataSourceInspection", "SameParameterValue"})
 @AutoConfigureMetrics
+@AutoConfigureTracing
 @SpringBootTest
 @Testcontainers
 @Slf4j
@@ -248,8 +251,12 @@ class SequentialInboxITBase extends KafkaIntegrationTestBase {
         messageRecorder.assertTraceContextForMessage(traceId, message);
     }
 
-    void setTraceContext(Long traceId) {
-        traceContextUpdater.setTraceContext(new TraceContext(0L, traceId, 123L, 456L, null));
+    void assertSampled(Boolean sampled, AvroMessage message) {
+        messageRecorder.assertSampledForMessage(sampled, message);
+    }
+
+    TraceContextScope setTraceContext(Long traceId, Boolean sampled) {
+        return traceContextUpdater.setTraceContext(new TraceContext(0L, traceId, 123L, 456L, null, sampled));
     }
 
     Optional<SequenceInstance> findSequenceInstanceByContextId(String contextId) {

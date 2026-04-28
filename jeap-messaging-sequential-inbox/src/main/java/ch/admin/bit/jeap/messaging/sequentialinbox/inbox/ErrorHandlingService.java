@@ -2,6 +2,7 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.inbox;
 
 import ch.admin.bit.jeap.messaging.avro.errorevent.MessageHandlerExceptionInformation;
 import ch.admin.bit.jeap.messaging.kafka.errorhandling.ErrorServiceSender;
+import ch.admin.bit.jeap.messaging.kafka.tracing.TraceContextScope;
 import ch.admin.bit.jeap.messaging.sequentialinbox.jpa.MessageRepository;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.BufferedMessage;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstance;
@@ -30,7 +31,7 @@ public class ErrorHandlingService {
                                                           BufferedMessage bufferedMessage) {
         log.debug("Sending deleted sequenced message with id {} from sequence instance id {} to error handler",
                 sequencedMessage.getId(), sequenceInstance.getId());
-        try (BufferedMessageTracing.TraceContextRestorer ignored =
+        try (TraceContextScope ignored =
                      bufferedMessageTracing.updateCurrentTraceContext(sequencedMessage.getTraceContext())) {
             Map<String, byte[]> headers = messageRepository.getHeaders(sequencedMessage);
             Optional<DeserializedMessage> deserializedMessageOpt = getDeserializedMessage(sequencedMessage, bufferedMessage);
