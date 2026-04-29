@@ -12,6 +12,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [16.6.0] - 2026-04-29
+### Changed
+- update jeap-messaging from 13.5.0 to 13.6.0
+- Update parent from 7.0.5-alpha-springboot4 to 7.0.6-alpha-springboot4
+- update jeap-spring-boot-vault-starter from 22.1.0-alpha-springboot4 to 22.2.0-alpha-springboot4
+- update jeap-crypto from 8.1.0-alpha-springboot4 to 8.2.0-alpha-springboot4
+- update jeap-spring-boot-roles-anywhere-starter from 2.1.0-alpha-springboot4 to 2.3.0-alpha-springboot4
+
 ## [16.5.0] - 2026-04-20
 ### Changed
 - update jeap-spring-boot-security-starter from 21.3.0 to 21.4.0
