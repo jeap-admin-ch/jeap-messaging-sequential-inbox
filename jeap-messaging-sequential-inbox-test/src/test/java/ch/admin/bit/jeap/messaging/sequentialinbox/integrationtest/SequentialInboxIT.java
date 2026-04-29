@@ -199,7 +199,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
         JmeSimpleTestEvent successorEvent = createJmeSimpleTestEvent(contextId);
 
         // when: sending the successor event with an unsampled trace so we can verify the decision survives replay
-        try (TraceContextScope ignored = setTraceContext(123L, Boolean.FALSE)) {
+        try (TraceContextScope _ = setTraceContext(123L, Boolean.FALSE)) {
             sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, successorEvent);
         }
 
@@ -210,7 +210,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
 
         // when: sending the predecessor event for the same context ID with a sampled trace
         JmeDeclarationCreatedEvent predecessorEvent = createDeclarationCreatedEvent(contextId);
-        try (TraceContextScope ignored = setTraceContext(456L, Boolean.TRUE)) {
+        try (TraceContextScope _ = setTraceContext(456L, Boolean.TRUE)) {
             sendSync(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, predecessorEvent);
         }
 

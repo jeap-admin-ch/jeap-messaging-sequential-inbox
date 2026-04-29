@@ -31,7 +31,7 @@ public class ErrorHandlingService {
                                                           BufferedMessage bufferedMessage) {
         log.debug("Sending deleted sequenced message with id {} from sequence instance id {} to error handler",
                 sequencedMessage.getId(), sequenceInstance.getId());
-        try (TraceContextScope ignored =
+        try (TraceContextScope _ =
                      bufferedMessageTracing.updateCurrentTraceContext(sequencedMessage.getTraceContext())) {
             Map<String, byte[]> headers = messageRepository.getHeaders(sequencedMessage);
             Optional<DeserializedMessage> deserializedMessageOpt = getDeserializedMessage(sequencedMessage, bufferedMessage);

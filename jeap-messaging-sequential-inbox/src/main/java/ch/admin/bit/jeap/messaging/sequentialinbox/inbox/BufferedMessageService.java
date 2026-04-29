@@ -94,7 +94,7 @@ class BufferedMessageService {
      * @return true if the message was successfully handled, false otherwise
      */
     private boolean handleBufferedMessage(SequencedMessage sequencedMessage) {
-        try (TraceContextScope ignored = bufferedMessageTracing.updateCurrentTraceContext(sequencedMessage.getTraceContext())) {
+        try (TraceContextScope _ = bufferedMessageTracing.updateCurrentTraceContext(sequencedMessage.getTraceContext())) {
             Optional<DeserializedMessage> deserializedMessage = getDeserializedMessage(sequencedMessage);
             if (deserializedMessage.isEmpty()) {
                 log.debug("Deserialization failed for message {}", sequencedMessage);
