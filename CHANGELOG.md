@@ -15,6 +15,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [17.7.0-alpha-springboot4] - 2026-05-07
+### Changed
+  escaping Spring's MVC handling while the trace context (`traceId`, `spanId`) is still present.
+  Enable via `jeap.logging.rest.unhandled-exception-logging.enabled=true`.
+- update jeap-spring-boot-security-starter from 22.4.0-alpha-springboot4 to 22.5.0-alpha-springboot4
+- Added opt-in `UnhandledExceptionLoggingFilter` in `jeap-spring-boot-logging-starter` that logs exceptions
+
 ## [17.6.0-alpha-springboot4] - 2026-05-06
 
 ### Changed
