@@ -16,6 +16,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - Update parent from 6.0.4 to 6.0.5
 - update jeap-spring-boot-security-starter from 21.5.0 to 21.6.0
+- added second argument to TraceBridge.getSpan to allow to pass in the spanName and have more meaningful traces
+- update jeap-messaging from 13.8.0 to 13.9.0
 
 ## [16.8.0] - 2026-05-06
 ### Changed
