@@ -6,7 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 > - Spring Boot 3 maintenance (bug fixes, patches, and regular updates) continues on branch `release/springboot3`.
-> - The Spring Boot 4 upgrade process happens on the `master` branch, with the goal of releasing Spring Boot 4 compatible versions of all jeap components in a single major release.
 
 # Changelog
 
@@ -15,99 +14,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [17.9.0-alpha-springboot4] - 2026-05-19
-
+## [18.0.0] - 2026-05-27
 ### Changed
-- Update parent from 7.0.7-alpha-springboot4 to 7.0.9-alpha-springboot4
-- update jeap-spring-boot-security-starter from 22.5.1-alpha-springboot4 to 22.6.0-alpha-springboot4
-- update jeap-spring-boot-roles-anywhere-starter from 2.4.0-alpha-springboot4 to 2.5.0-alpha-springboot4
-- update jeap-crypto from 8.5.0-alpha-springboot4 to 8.6.0-alpha-springboot4
-- update jeap-messaging from 14.8.0-alpha-springboot4 to 14.9.0-alpha-springboot4
-- update jeap-spring-boot-vault-starter from 22.5.1-alpha-springboot4 to 22.6.0-alpha-springboot4
-
-## [17.8.0-alpha-springboot4] - 2026-05-07
-### Changed
-- update jeap-messaging from 14.7.0-alpha-springboot4 to 14.8.0-alpha-springboot4
-
-## [17.7.0-alpha-springboot4] - 2026-05-07
-### Changed
-  escaping Spring's MVC handling while the trace context (`traceId`, `spanId`) is still present.
-  Enable via `jeap.logging.rest.unhandled-exception-logging.enabled=true`.
-  Enable via `jeap.logging.rest.unhandled-exception-logging.enabled=true`.
-  escaping Spring's MVC handling while the trace context (`traceId`, `spanId`) is still present.
-- update jeap-spring-boot-security-starter from 22.4.0-alpha-springboot4 to 22.5.0-alpha-springboot4
-- Added opt-in `UnhandledExceptionLoggingFilter` in `jeap-spring-boot-logging-starter` that logs exceptions
-- update jeap-spring-boot-vault-starter from 22.4.0-alpha-springboot4 to 22.5.0-alpha-springboot4
-- update jeap-messaging from 14.6.0-alpha-springboot4 to 14.7.0-alpha-springboot4
-- update jeap-crypto from 8.4.0-alpha-springboot4 to 8.5.0-alpha-springboot4
-
-## [17.6.0-alpha-springboot4] - 2026-05-06
-
-### Changed
-- Update parent from 7.0.6-alpha-springboot4 to 7.0.7-alpha-springboot4
-- update jeap-spring-boot-security-starter from 22.3.1-alpha-springboot4 to 22.4.0-alpha-springboot4
-- update jeap-spring-boot-roles-anywhere-starter from 2.3.0-alpha-springboot4 to 2.4.0-alpha-springboot4
-- update jeap-crypto from 8.3.0-alpha-springboot4 to 8.4.0-alpha-springboot4
-- update jeap-messaging from 14.5.0-alpha-springboot4 to 14.6.0-alpha-springboot4
-- update jeap-spring-boot-vault-starter from 22.3.1-alpha-springboot4 to 22.4.0-alpha-springboot4
-
-## [17.5.0-alpha-springboot4] - 2026-05-01
-### Changed
-- update jeap-messaging from 14.4.0-alpha-springboot4 to 14.5.0-alpha-springboot4
-- adapted TemplatePathResolver that it works in IDE again
-
-## [17.4.0-alpha-springboot4] - 2026-04-30
-
-### Changed
-
-- update jeap-messaging from 14.3.1-alpha-springboot4 to 14.4.0-alpha-springboot4
-
-## [17.3.0-alpha-springboot4] - 2026-04-29
-
-### Changed
-
-- Tracing stack migrated from Brave/Zipkin to OpenTelemetry.
-- update jeap-spring-boot-security-starter to 22.3.1-alpha-springboot4
-- update jeap-messaging to 14.3.1-alpha-springboot4
-
-### Breaking — schema migration required in downstream services
-
-- New column `sampled boolean` on `sequenced_message`. Needed so the sampling decision captured from the origin
-  trace is preserved when a buffered message is released through `BufferedMessageService`.
-- Downstream services must ship a Flyway migration of the form:
-  ```sql
-  ALTER TABLE sequenced_message ADD COLUMN sampled boolean;
-  ```
-  See `jeap-messaging-sequential-inbox-test/src/test/resources/db/migration/V5__add-sampled-to-sequenced-message.sql`
-  for the reference delta used by this library's own integration tests. Rows written by previous versions carry
-  `NULL` and are treated as sampled on replay (legacy-compatible default).
-
-## [17.2.0-alpha-springboot4] - 2026-04-24
-
-### Changed
-- Update parent from 7.0.5-alpha-springboot4 to 7.0.6-alpha-springboot4
-- update jeap-spring-boot-security-starter from 22.1.0-alpha-springboot4 to 22.2.0-alpha-springboot4
-- update jeap-spring-boot-vault-starter from 22.1.0-alpha-springboot4 to 22.2.0-alpha-springboot4
-- update jeap-spring-boot-roles-anywhere-starter from 2.1.0-alpha-springboot4 to 2.3.0-alpha-springboot4
-- update jeap-messaging from 14.1.0-alpha-springboot4 to 14.2.0-alpha-springboot4
-- update jeap-crypto from 8.1.0-alpha-springboot4 to 8.2.0-alpha-springboot4
-
-## [17.1.0-alpha-springboot4] - 2026-04-23
-
-### Changed
-- Update parent from 7.0.4-alpha-springboot4 to 7.0.5-alpha-springboot4
-- update jeap-spring-boot-security-starter from 22.0.0-alpha-springboot4 to 22.1.0-alpha-springboot4
-- update jeap-spring-boot-vault-starter from 21.3.0 to 22.1.0-alpha-springboot4
-- update jeap-crypto from 8.0.0-alpha-springboot4 to 8.1.0-alpha-springboot4
-- Update parent from 7.0.3-alpha-springboot4 to 7.0.5-alpha-springboot4
-- update jeap-messaging from 14.0.0-alpha-springboot4 to 14.1.0-alpha-springboot4
-- Update parent from 7.0.2-alpha-springboot4 to 7.0.5-alpha-springboot4
-- update jeap-spring-boot-roles-anywhere-starter from 2.0.0-alpha-springboot4 to 2.1.0-alpha-springboot4
-
-## [17.0.0] - 2026-xx-xx
-
-### Changed
-- Update parent from 6.0.3 to 7.0.0 (Spring Boot 4)
+  - Official release with spring boot 4
 
 ## [16.4.0] - 2026-04-16
 
