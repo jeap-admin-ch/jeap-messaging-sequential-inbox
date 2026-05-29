@@ -14,6 +14,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [18.1.0] - 2026-05-29
+### Changed
+- update jeap-messaging from 15.0.0 to 15.1.0
+- update jeap-spring-boot-roles-anywhere-starter from 3.0.0 to 3.1.0
+
 ## [18.0.0] - 2026-05-27
 ### Changed
   - Official release with spring boot 4
