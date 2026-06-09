@@ -14,6 +14,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [18.4.0] - 2026-06-09
+### Changed
+- update jeap-spring-boot-security-starter from 23.2.0 to 23.3.0
+- Update logstash-logback-encoder from 8.1 to 9.0 (migrates to Jackson 3)
+- Update aws-advanced-jdbc-wrapper version to 4.0.1
+
 ## [18.3.0] - 2026-06-04
 
 ### Changed
