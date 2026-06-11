@@ -15,8 +15,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [16.10.0] - 2026-06-11
 
 ### Changed
-
 - Update parent from 6.0.5 to 6.0.6
+- Update aws-advanced-jdbc-wrapper version to 4.0.1
+- Update logstash-logback-encoder from 8.1 to 9.0 (migrates to Jackson 3)
+- update jeap-spring-boot-security-starter from 21.6.0 to 21.7.0
 
 ## [16.9.2] - 2026-06-09
 ### Changed
