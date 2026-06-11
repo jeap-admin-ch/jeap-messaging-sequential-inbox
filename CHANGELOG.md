@@ -14,6 +14,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [18.5.0] - 2026-06-11
+### Changed
+  responses (e.g. Spring Boot's welcome page forwarding `/` to `index.html`). ETag content-caching is now disabled
+  for FORWARD/INCLUDE dispatches so forwarded responses are served with their full body (without an ETag); regular
+  requests keep their ETag unchanged.
+- update jeap-spring-boot-security-starter from 23.3.0 to 23.4.0
+- `jeap-spring-boot-web-config-starter`: the ShallowEtag filter no longer swallows the body of `forward:`-ed
+
 ## [18.4.0] - 2026-06-09
 ### Changed
 - update jeap-spring-boot-security-starter from 23.2.0 to 23.3.0
