@@ -15,8 +15,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [16.11.0] - 2026-06-15
 
 ### Changed
-
 - Update parent from 6.0.6 to 6.0.7
+- Remove logstash version because it is managed by the internal parent now
+- Update parent from 8.1.0 to 8.2.0
+- update jeap-spring-boot-security-starter from 21.7.0 to 21.8.0
 
 ## [16.10.0] - 2026-06-11
 
