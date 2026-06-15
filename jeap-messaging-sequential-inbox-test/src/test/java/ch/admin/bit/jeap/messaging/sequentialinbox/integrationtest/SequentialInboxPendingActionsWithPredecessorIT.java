@@ -4,7 +4,6 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.actions.SequentialInboxPendin
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessagePendingAction;
 import ch.admin.bit.jme.test.JmeEnumTestEvent;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,16 +17,19 @@ import java.util.UUID;
 
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.*;
 
-@Slf4j
 @TestPropertySource(properties = "jeap.messaging.sequential-inbox.config-location=classpath:/messaging/jeap-sequential-inbox-for-pending-actions.yml")
 @ContextConfiguration(classes = {SequentialInboxPendingActionsWithPredecessorIT.NoOpLockProviderConfig.class})
 class SequentialInboxPendingActionsWithPredecessorIT extends SequentialInboxITBase {
 
+    private final SequentialInboxPendingActionsService sequentialInboxPendingActionsService;
+
     @Autowired
-    private SequentialInboxPendingActionsService sequentialInboxPendingActionsService;
+    SequentialInboxPendingActionsWithPredecessorIT(SequentialInboxPendingActionsService sequentialInboxPendingActionsService) {
+        this.sequentialInboxPendingActionsService = sequentialInboxPendingActionsService;
+    }
 
     @Test
-    void testInbox_messageWithPredecessor_waitingAndBuffered_pendingActionConsume() {
+    void inboxMessageWithPredecessorWaitingAndBufferedPendingActionConsume() {
         // given: a test jmeSimpleTestEvent with a predecessor
         UUID contextId = randomContextId();
         JmeSimpleTestEvent jmeSimpleTestEvent = createJmeSimpleTestEvent(contextId);

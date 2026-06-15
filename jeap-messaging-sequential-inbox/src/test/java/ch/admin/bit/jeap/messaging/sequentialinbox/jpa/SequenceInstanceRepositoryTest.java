@@ -33,9 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ContextConfiguration(classes = SequenceInstanceRepositoryTest.TestConfig.class)
 class SequenceInstanceRepositoryTest {
 
-    @Autowired
-    private TestEntityManager testEntityManager;
-
     @Container
     @ServiceConnection
     static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
@@ -46,13 +43,21 @@ class SequenceInstanceRepositoryTest {
     static class TestConfig {
     }
 
+    private final TestEntityManager testEntityManager;
+    private final SequenceInstanceRepository sequenceInstanceRepository;
+    private final SpringDataJpaSequenceInstanceRepository jpaSequenceInstanceRepository;
+
     @Autowired
-    private SequenceInstanceRepository sequenceInstanceRepository;
-    @Autowired
-    private SpringDataJpaSequenceInstanceRepository jpaSequenceInstanceRepository; // For checks
+    SequenceInstanceRepositoryTest(TestEntityManager testEntityManager,
+                                   SequenceInstanceRepository sequenceInstanceRepository,
+                                   SpringDataJpaSequenceInstanceRepository jpaSequenceInstanceRepository) {
+        this.testEntityManager = testEntityManager;
+        this.sequenceInstanceRepository = sequenceInstanceRepository;
+        this.jpaSequenceInstanceRepository = jpaSequenceInstanceRepository;
+    }
 
     @Test
-    void save_newSequenceInstance() {
+    void saveNewSequenceInstance() {
         SequenceInstance se = createSequenceInstance("name", "contextId1");
         long persistedSequenceInstanceId = sequenceInstanceRepository.saveNewInstance(se);
 
@@ -64,7 +69,7 @@ class SequenceInstanceRepositoryTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void save_sameNameContextId_throwsException() {
+    void saveSameNameContextIdThrowsException() {
 
         sequenceInstanceRepository.saveNewInstance(createSequenceInstance("name", "contextId2"));
         SequenceInstance sequenceInstance = createSequenceInstance("name", "contextId2");
@@ -89,7 +94,7 @@ class SequenceInstanceRepositoryTest {
     }
 
     @Test
-    void markExpiredInstancesForDelayedRemoval_marksExpiredInstancesAndReturnsCount() {
+    void markExpiredInstancesForDelayedRemovalMarksExpiredInstancesAndReturnsCount() {
         // Create two expired instances and one non-expired instance
         long expired1Id = createAndSaveSequenceInstance("expired1", "ctx1", SequenceInstanceState.OPEN, Duration.ofMinutes(-1));
         long expired2Id = createAndSaveSequenceInstance("expired2", "ctx2", SequenceInstanceState.OPEN, Duration.ofMinutes(-2));
@@ -116,7 +121,7 @@ class SequenceInstanceRepositoryTest {
     }
 
     @Test
-    void findInstancesForRemovalOldestFirst_returnsInstancesOrderedByRemoveAfter() {
+    void findInstancesForRemovalOldestFirstReturnsInstancesOrderedByRemoveAfter() {
         // Create instances with different removeAfter times in the past
         createAndSaveSequenceInstanceWithRemovalTime("middle", "ctx2", SequenceInstanceState.OPEN,
                 Duration.ofMinutes(-30), ZonedDateTime.now().minusMinutes(15));
@@ -144,7 +149,7 @@ class SequenceInstanceRepositoryTest {
     }
 
     @Test
-    void findInstancesForRemovalOldestFirst_respectsMaxNumInstances() {
+    void findInstancesForRemovalOldestFirstRespectsMaxNumInstances() {
         // Create 5 instances all ready for removal
         for (int i = 0; i < 5; i++) {
             createAndSaveSequenceInstanceWithRemovalTime("instance" + i, "ctx" + i, SequenceInstanceState.OPEN,
@@ -159,7 +164,7 @@ class SequenceInstanceRepositoryTest {
     }
 
     @Test
-    void deleteNotClosedById_deletesOpenInstance() {
+    void deleteNotClosedByIdDeletesOpenInstance() {
         // Create an OPEN instance
         long openId = createAndSaveSequenceInstance("open", "ctx1", SequenceInstanceState.OPEN, Duration.ofMinutes(1));
 
@@ -173,7 +178,7 @@ class SequenceInstanceRepositoryTest {
     }
 
     @Test
-    void deleteNotClosedById_doesNotDeleteClosedInstance() {
+    void deleteNotClosedByIdDoesNotDeleteClosedInstance() {
         // Create a CLOSED instance
         long closedId = createAndSaveSequenceInstance("closed", "ctx1", SequenceInstanceState.CLOSED, Duration.ofMinutes(1));
 
@@ -187,7 +192,7 @@ class SequenceInstanceRepositoryTest {
     }
 
     @Test
-    void deleteNotClosedById_returnsZeroForNonExistentId() {
+    void deleteNotClosedByIdReturnsZeroForNonExistentId() {
         // Try to delete a non-existent instance
         int deletedCount = sequenceInstanceRepository.deleteNotClosedById(999999L);
 
@@ -196,7 +201,7 @@ class SequenceInstanceRepositoryTest {
     }
 
     @Test
-    void findAllByPendingActionIsNotNull_returnsInstancesWithPendingAction() {
+    void findAllByPendingActionIsNotNullReturnsInstancesWithPendingAction() {
         SequenceInstance withClose = SequenceInstance.builder()
                 .name("pending1")
                 .contextId("ctx1")
@@ -233,7 +238,7 @@ class SequenceInstanceRepositoryTest {
     }
 
     @Test
-    void findAllExpired_returnsOnlyInstancesWithRetainUntilBeforeNow() {
+    void findAllExpiredReturnsOnlyInstancesWithRetainUntilBeforeNow() {
         saveSequenceInstance(17651L, "past1", Duration.ofMinutes(-10));
         saveSequenceInstance(17652L, "past2", Duration.ofMinutes(-10));
         saveSequenceInstance(17653L, "past3", Duration.ofMinutes(-10));
@@ -252,7 +257,7 @@ class SequenceInstanceRepositoryTest {
     }
 
     @Test
-    void findByNameAndContextId_returnsCorrectInstance() {
+    void findByNameAndContextIdReturnsCorrectInstance() {
         String name = "testName";
         String contextId = "testContext";
         sequenceInstanceRepository.saveNewInstance(createSequenceInstance(name, contextId));
@@ -266,7 +271,7 @@ class SequenceInstanceRepositoryTest {
     }
 
     @Test
-    void findAllWithRetentionPeriodElapsed75Percent_returnsCorrectInstances() {
+    void findAllWithRetentionPeriodElapsed75PercentReturnsCorrectInstances() {
         long id = 687770L;
         // Instance with 80% retention elapsed
         saveSequenceInstance(id, "elapsed80", 80, 20);

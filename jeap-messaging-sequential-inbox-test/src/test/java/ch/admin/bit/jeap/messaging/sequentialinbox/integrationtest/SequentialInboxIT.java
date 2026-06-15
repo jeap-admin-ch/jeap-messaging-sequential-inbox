@@ -2,7 +2,6 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest;
 
 import ch.admin.bit.jeap.messaging.avro.AvroMessageKey;
 import ch.admin.bit.jeap.messaging.avro.errorevent.MessageProcessingFailedEvent;
-import ch.admin.bit.jeap.messaging.kafka.tracing.TraceContextScope;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.DeclarationCreatedEventListener;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.MultipleTestEventListener;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages;
@@ -13,7 +12,6 @@ import ch.admin.bit.jme.test.JmeSimpleTestEvent;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Timer;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
@@ -29,12 +27,13 @@ import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.messag
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @TestPropertySource(properties = "jeap.messaging.kafka.expose-message-key-to-consumer=true")
 class SequentialInboxIT extends SequentialInboxITBase {
 
+    private static final String JME_SIMPLE_TEST_EVENT = "JmeSimpleTestEvent";
+
     @Test
-    void testInbox_messageWithoutPredecessor_processedSuccessfully() {
+    void inboxMessageWithoutPredecessorProcessedSuccessfully() {
         // given: a test event
         UUID contextId = randomContextId();
         JmeDeclarationCreatedEvent event = createDeclarationCreatedEvent(contextId);
@@ -50,7 +49,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testInbox_messageWithPredecessor_waitingAndBuffered() {
+    void inboxMessageWithPredecessorWaitingAndBuffered() {
         // given: a test event with a predecessor
         UUID contextId = randomContextId();
         JmeSimpleTestEvent event = createJmeSimpleTestEvent(contextId);
@@ -67,7 +66,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testInbox_message_notSequenced() {
+    void inboxMessageNotSequenced() {
         // given: a test event with a message for which TestMessageFilter.shouldSequence returns false
         JmeDeclarationCreatedEvent event = createDeclarationCreatedEvent("NOT_SEQUENCED");
 
@@ -81,7 +80,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testInbox_idempotentEventProcessedOnlyOnce() {
+    void inboxIdempotentEventProcessedOnlyOnce() {
         // given: two events with the same idempotence ID
         UUID idempotenceId = UUID.randomUUID();
         UUID contextId = UUID.randomUUID();
@@ -106,7 +105,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testInbox_messageWithPredecessor_bufferedAndThenProcessedAfterPredecessorHandled() {
+    void inboxMessageWithPredecessorBufferedAndThenProcessedAfterPredecessorHandled() {
         // given: an event with a predecessor
         UUID contextId = randomContextId();
         JmeSimpleTestEvent successorEvent = createJmeSimpleTestEvent(contextId);
@@ -137,7 +136,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
 
 
     @Test
-    void testInbox_messageWithPredecessor_bufferedAndThenProcessedAfterPredecessorHandled_metricsProvided() {
+    void inboxMessageWithPredecessorBufferedAndThenProcessedAfterPredecessorHandledMetricsProvided() {
         // given: an event with a predecessor
         UUID contextId = randomContextId();
         JmeSimpleTestEvent successorEvent = createJmeSimpleTestEvent(contextId);
@@ -161,21 +160,21 @@ class SequentialInboxIT extends SequentialInboxITBase {
 
         // then: assert metric values
         Optional<Counter> counterOptional = findMeter(Counter.class,
-                "jeap.messaging.sequential-inbox.consumed-messages", "JmeSimpleTestEvent");
+                "jeap.messaging.sequential-inbox.consumed-messages", JME_SIMPLE_TEST_EVENT);
         assertThat(counterOptional)
                 .isPresent()
                 .hasValueSatisfying(counter ->
                         assertThat(counter.count())
                                 .isPositive());
         Optional<Timer> timerOptional = findMeter(Timer.class,
-                "jeap.messaging.sequential-inbox.waiting-message-delay", "JmeSimpleTestEvent");
+                "jeap.messaging.sequential-inbox.waiting-message-delay", JME_SIMPLE_TEST_EVENT);
         assertThat(timerOptional)
                 .isPresent()
                 .hasValueSatisfying(timer ->
                         assertThat(timer.count())
                                 .isPositive());
         Optional<Gauge> gaugeOptional = findMeter(Gauge.class,
-                "jeap.messaging.sequential-inbox.waiting-messages", "JmeSimpleTestEvent");
+                "jeap.messaging.sequential-inbox.waiting-messages", JME_SIMPLE_TEST_EVENT);
         assertThat(gaugeOptional)
                 .isPresent()
                 .hasValueSatisfying(gauge ->
@@ -193,13 +192,13 @@ class SequentialInboxIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testInbox_messageWithPredecessor_bufferedThenProcessed_assertTraceContextId() {
+    void inboxMessageWithPredecessorBufferedThenProcessedAssertTraceContextId() {
         // given: an event with a predecessor
         UUID contextId = randomContextId();
         JmeSimpleTestEvent successorEvent = createJmeSimpleTestEvent(contextId);
 
         // when: sending the successor event with an unsampled trace so we can verify the decision survives replay
-        try (TraceContextScope _ = setTraceContext(123L, Boolean.FALSE)) {
+        try (var _ = setTraceContext(123L, Boolean.FALSE)) {
             sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, successorEvent);
         }
 
@@ -210,7 +209,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
 
         // when: sending the predecessor event for the same context ID with a sampled trace
         JmeDeclarationCreatedEvent predecessorEvent = createDeclarationCreatedEvent(contextId);
-        try (TraceContextScope _ = setTraceContext(456L, Boolean.TRUE)) {
+        try (var _ = setTraceContext(456L, Boolean.TRUE)) {
             sendSync(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, predecessorEvent);
         }
 
@@ -292,7 +291,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
         assertMessageStateWaitingAndBuffered(successorEvent);
 
         // when: sending the predecessor event for the same context ID, and provoking a failure for the successor event
-        MultipleTestEventListener.failOnJmeSimpleTestEvent = true;
+        MultipleTestEventListener.setFailOnJmeSimpleTestEvent(true);
         JmeDeclarationCreatedEvent predecessorEvent = createDeclarationCreatedEvent(contextId);
         sendSync(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, predecessorEvent);
 
@@ -307,7 +306,7 @@ class SequentialInboxIT extends SequentialInboxITBase {
         assertSequenceOpen(contextId);
 
         // when: simulating a retry by the EHS by sending the successor event again
-        MultipleTestEventListener.failOnJmeSimpleTestEvent = false;
+        MultipleTestEventListener.setFailOnJmeSimpleTestEvent(false);
         sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, successorEvent);
 
         // then: assert that the successor event was consumed by the message listener

@@ -7,7 +7,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,18 +29,23 @@ class SequentialInboxMessageHandlerTest {
     private class InvocationTestTarget {
 
         public void targetMethod(AvroMessage avroMessage) {
+            Objects.requireNonNull(avroMessage);
             targetMethodInvoked = true;
         }
 
         public void targetMethodThrowingException(AvroMessage avroMessage) {
-            throw new RuntimeException("cause");
+            Objects.requireNonNull(avroMessage);
+            throw new IllegalStateException("cause");
         }
 
-        public void targetMethodThrowingCheckedException(AvroMessage avroMessage) throws Exception {
-            throw new Exception("checked exception cause");
+        public void targetMethodThrowingCheckedException(AvroMessage avroMessage) throws IOException {
+            Objects.requireNonNull(avroMessage);
+            throw new IOException("checked exception cause");
         }
 
         public void targetMethodWithKey(AvroMessageKey avroMessageKey, AvroMessage avroMessage) {
+            Objects.requireNonNull(avroMessageKey);
+            Objects.requireNonNull(avroMessage);
             targetMethodWithKeyInvoked = true;
         }
     }
@@ -50,9 +57,9 @@ class SequentialInboxMessageHandlerTest {
     }
 
     @Test
-    void invoke_withValidParameters() throws Exception {
+    void invokeWithValidParameters() {
         Object bean = new InvocationTestTarget();
-        Method method = bean.getClass().getMethod("targetMethod", AvroMessage.class);
+        Method method = getMethod(bean.getClass(), "targetMethod", AvroMessage.class);
         ListenerBeanMethod listenerBeanMethod = new ListenerBeanMethod(method, bean, AvroMessage.class);
 
         sequentialInboxMessageHandler = new SequentialInboxMessageHandler(listenerBeanMethod, false);
@@ -62,9 +69,9 @@ class SequentialInboxMessageHandlerTest {
     }
 
     @Test
-    void invoke_withValidParameters_withKey() throws Exception {
+    void invokeWithValidParametersWithKey() {
         Object bean = new InvocationTestTarget();
-        Method method = bean.getClass().getMethod("targetMethodWithKey", AvroMessageKey.class, AvroMessage.class);
+        Method method = getMethod(bean.getClass(), "targetMethodWithKey", AvroMessageKey.class, AvroMessage.class);
         ListenerBeanMethod listenerBeanMethod = new ListenerBeanMethod(method, bean, AvroMessage.class);
 
         sequentialInboxMessageHandler = new SequentialInboxMessageHandler(listenerBeanMethod, true);
@@ -74,23 +81,22 @@ class SequentialInboxMessageHandlerTest {
     }
 
     @Test
-    void invoke_throws() throws Exception {
+    void invokeThrows() {
         Object bean = new InvocationTestTarget();
-        Method method = bean.getClass().getMethod("targetMethodThrowingException", AvroMessage.class);
+        Method method = getMethod(bean.getClass(), "targetMethodThrowingException", AvroMessage.class);
         ListenerBeanMethod listenerBeanMethod = new ListenerBeanMethod(method, bean, AvroMessage.class);
 
         sequentialInboxMessageHandler = new SequentialInboxMessageHandler(listenerBeanMethod, false);
 
         assertThatThrownBy(() -> sequentialInboxMessageHandler.invoke(avroMessageKey, avroMessage))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessage("cause");
-        ;
     }
 
     @Test
-    void invoke_throwsCheckedException() throws Exception {
+    void invokeThrowsCheckedException() {
         Object bean = new InvocationTestTarget();
-        Method method = bean.getClass().getMethod("targetMethodThrowingCheckedException", AvroMessage.class);
+        Method method = getMethod(bean.getClass(), "targetMethodThrowingCheckedException", AvroMessage.class);
         ListenerBeanMethod listenerBeanMethod = new ListenerBeanMethod(method, bean, AvroMessage.class);
 
         sequentialInboxMessageHandler = new SequentialInboxMessageHandler(listenerBeanMethod, false);
@@ -101,9 +107,9 @@ class SequentialInboxMessageHandlerTest {
     }
 
     @Test
-    void invoke_reflectionError() throws Exception {
+    void invokeReflectionError() {
         Object bean = new InvocationTestTarget();
-        Method differentObjectMethod = DifferentClass.class.getMethod("someMethod");
+        Method differentObjectMethod = getMethod(DifferentClass.class, "someMethod");
         ListenerBeanMethod listenerBeanMethod = new ListenerBeanMethod(differentObjectMethod, bean, AvroMessage.class);
 
         sequentialInboxMessageHandler = new SequentialInboxMessageHandler(listenerBeanMethod, false);
@@ -114,13 +120,21 @@ class SequentialInboxMessageHandlerTest {
     }
 
     @Test
-    void testToString() throws Exception {
+    void toStringContainsMethodAndKeyFlag() {
         Object bean = new Object();
-        Method method = bean.getClass().getMethod("equals", Object.class);
-        SequentialInboxMessageHandler sequentialInboxMessageHandler =
+        Method method = getMethod(bean.getClass(), "equals", Object.class);
+        SequentialInboxMessageHandler messageHandler =
                 new SequentialInboxMessageHandler(new ListenerBeanMethod(method, bean, AvroMessage.class), false);
 
-        assertThat(sequentialInboxMessageHandler.toString())
+        assertThat(messageHandler.toString())
                 .hasToString("java.lang.Object#equals key=false");
+    }
+
+    private Method getMethod(Class<?> type, String methodName, Class<?>... parameterTypes) {
+        try {
+            return type.getMethod(methodName, parameterTypes);
+        } catch (NoSuchMethodException ex) {
+            throw new AssertionError(ex);
+        }
     }
 }

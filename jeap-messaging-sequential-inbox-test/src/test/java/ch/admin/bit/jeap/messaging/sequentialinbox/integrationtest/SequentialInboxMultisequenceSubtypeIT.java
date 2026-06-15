@@ -4,7 +4,6 @@ import ch.admin.bit.jeap.messaging.avro.AvroMessage;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.IceCreamFlavour;
 import ch.admin.bit.jme.test.JmeEnumTestEvent;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
@@ -12,7 +11,6 @@ import java.util.UUID;
 
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.*;
 
-@Slf4j
 @TestPropertySource(properties = "jeap.messaging.sequential-inbox.config-location=classpath:/messaging/jeap-sequential-inbox-multisequence-subtypes.yml")
 class SequentialInboxMultisequenceSubtypeIT extends SequentialInboxITBase {
 
@@ -31,7 +29,7 @@ class SequentialInboxMultisequenceSubtypeIT extends SequentialInboxITBase {
      */
 
     @Test
-    void testInbox_messagesWithPredecessors_waitingAndBuffered() {
+    void inboxMessagesWithPredecessorsWaitingAndBuffered() {
         // given: test events
         UUID contextIdSeq1 = randomContextId();
         UUID contextIdSeq2 = randomContextId();

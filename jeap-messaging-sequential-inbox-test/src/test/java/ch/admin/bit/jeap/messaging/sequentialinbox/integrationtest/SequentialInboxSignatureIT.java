@@ -9,7 +9,6 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstanceS
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
 import ch.admin.bit.jme.test.BeanReferenceMessageKey;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfigureMetrics;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,20 +28,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureMetrics
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {"spring.application.name=jme-messaging-receiverpublisher-outbox-service"})
-@Slf4j
 @ActiveProfiles("test-signing")
 @TestPropertySource(properties = "jeap.messaging.sequential-inbox.config-location=classpath:/messaging/jeap-sequential-inbox-for-encryption-and-signature.yml")
 class SequentialInboxSignatureIT extends SequentialInboxITBase {
+
+    private static final String SERVICE_NAME = "jme-messaging-receiverpublisher-outbox-service";
 
     @MockitoBean
     @SuppressWarnings("unused")
     private ContractsValidator contractsValidator; // Disable contract checking by mocking the contracts validator
 
     @Test
-    void signMessage_and_receiveSignedMessage() {
+    void signMessageAndReceiveSignedMessage() {
         // given: a test event
         UUID contextId = randomContextId();
-        JmeDeclarationCreatedEvent event = createDeclarationCreatedEvent(contextId,"jme-messaging-receiverpublisher-outbox-service");
+        JmeDeclarationCreatedEvent event = createDeclarationCreatedEvent(contextId, SERVICE_NAME);
 
         // when: sending the event
         sendSync(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, event);
@@ -50,7 +50,7 @@ class SequentialInboxSignatureIT extends SequentialInboxITBase {
         // then: assert that the event was consumed by the message listener
         assertSequenceState(contextId.toString(), SequenceInstanceState.OPEN);
 
-        JmeSimpleTestEvent jmeSimpleTestEvent = createJmeSimpleTestEvent(contextId, "jme-messaging-receiverpublisher-outbox-service");
+        JmeSimpleTestEvent jmeSimpleTestEvent = createJmeSimpleTestEvent(contextId, SERVICE_NAME);
         sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, jmeSimpleTestEvent);
 
         assertMessageConsumedByListener(event);
@@ -62,10 +62,10 @@ class SequentialInboxSignatureIT extends SequentialInboxITBase {
     }
 
     @Test
-    void signMessage_exceptionWhileImmediateProcessing_expectSignatureHeadersOnMessageProcessingFailedEvent() {
+    void signMessageExceptionWhileImmediateProcessingExpectSignatureHeadersOnMessageProcessingFailedEvent() {
         // given: a test event
         UUID contextId = randomContextId();
-        JmeSimpleTestEvent event = createJmeSimpleTestEvent(contextId, "jme-messaging-receiverpublisher-outbox-service");
+        JmeSimpleTestEvent event = createJmeSimpleTestEvent(contextId, SERVICE_NAME);
         event.getPayload().setMessage(DeclarationCreatedEventListener.FAILURE);
         AvroMessageKey key = createKey();
 
@@ -85,10 +85,10 @@ class SequentialInboxSignatureIT extends SequentialInboxITBase {
     }
 
     @Test
-    void signMessage_exceptionWhileDeferredProcessing_expectSignatureHeadersOnMessageProcessingFailedEvent() {
+    void signMessageExceptionWhileDeferredProcessingExpectSignatureHeadersOnMessageProcessingFailedEvent() {
         // given: a buffered test event that will fail during deferred processing
         UUID contextId = randomContextId();
-        JmeDeclarationCreatedEvent bufferedEvent = createDeclarationCreatedEvent(contextId,"jme-messaging-receiverpublisher-outbox-service");
+        JmeDeclarationCreatedEvent bufferedEvent = createDeclarationCreatedEvent(contextId, SERVICE_NAME);
         bufferedEvent.getPayload().setMessage(DeclarationCreatedEventListener.FAILURE);
         AvroMessageKey key = createKey();
         // when: sending the event
@@ -97,7 +97,7 @@ class SequentialInboxSignatureIT extends SequentialInboxITBase {
         assertSequenceState(contextId.toString(), SequenceInstanceState.OPEN);
 
         // given: a predecessor event that will trigger the deferred processing
-        JmeSimpleTestEvent predecessorEvent = createJmeSimpleTestEvent(contextId, "jme-messaging-receiverpublisher-outbox-service");
+        JmeSimpleTestEvent predecessorEvent = createJmeSimpleTestEvent(contextId, SERVICE_NAME);
         // when: sending the event
         sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, predecessorEvent);
 

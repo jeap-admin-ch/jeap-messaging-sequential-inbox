@@ -15,7 +15,6 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.kafka.KafkaSequentialInboxMes
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -50,7 +49,6 @@ import static org.mockito.Mockito.verify;
 @AutoConfigureTracing
 @SpringBootTest
 @Testcontainers
-@Slf4j
 @DirtiesContext
 class SequentialInboxITBase extends KafkaIntegrationTestBase {
 
@@ -60,35 +58,39 @@ class SequentialInboxITBase extends KafkaIntegrationTestBase {
     @ServiceConnection
     static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
 
-    @Autowired
     MessageRecorder messageRecorder;
-
-    @Autowired
     MultipleTestEventListener testEventListener;
-
-    @Autowired
     private KafkaSequentialInboxMessageConsumerFactory kafkaSequentialInboxMessageConsumerFactory;
-
-    @Autowired
     MessageRepository messageRepository;
-
-    @Autowired
     SequenceInstanceRepository sequenceInstanceRepository;
-
-    @Autowired
     JdbcTemplate jdbcTemplate;
-
-    @Autowired
     private TraceContextUpdater traceContextUpdater;
-
-    @Autowired
     private EntityManager entityManager;
-
-    @Autowired
     MeterRegistry meterRegistry;
 
     @MockitoSpyBean
     protected SequentialInboxService sequentialInboxService;
+
+    @Autowired
+    void setTestDependencies(MessageRecorder messageRecorder,
+                             MultipleTestEventListener testEventListener,
+                             KafkaSequentialInboxMessageConsumerFactory kafkaSequentialInboxMessageConsumerFactory,
+                             MessageRepository messageRepository,
+                             SequenceInstanceRepository sequenceInstanceRepository,
+                             JdbcTemplate jdbcTemplate,
+                             TraceContextUpdater traceContextUpdater,
+                             EntityManager entityManager,
+                             MeterRegistry meterRegistry) {
+        this.messageRecorder = messageRecorder;
+        this.testEventListener = testEventListener;
+        this.kafkaSequentialInboxMessageConsumerFactory = kafkaSequentialInboxMessageConsumerFactory;
+        this.messageRepository = messageRepository;
+        this.sequenceInstanceRepository = sequenceInstanceRepository;
+        this.jdbcTemplate = jdbcTemplate;
+        this.traceContextUpdater = traceContextUpdater;
+        this.entityManager = entityManager;
+        this.meterRegistry = meterRegistry;
+    }
 
     @BeforeAll
     static void beforeAll() {
@@ -104,7 +106,7 @@ class SequentialInboxITBase extends KafkaIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        MultipleTestEventListener.failOnJmeSimpleTestEvent = false;
+        MultipleTestEventListener.setFailOnJmeSimpleTestEvent(false);
         messageRecorder.reset();
         kafkaSequentialInboxMessageConsumerFactory.getContainers()
                 .forEach(c -> ContainerTestUtils.waitForAssignment(c, 1));

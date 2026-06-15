@@ -72,7 +72,7 @@ public class KafkaSequentialInboxMessageConsumerFactory {
                 throw SequentialInboxException.defaultTopicNotFound(messageTypeClass);
             }
             return defaultTopic;
-        } catch (Exception e) {
+        } catch (ReflectiveOperationException e) {
             log.error("Could not get default topic for message type '{}'", messageTypeClass.getName(), e);
             throw SequentialInboxException.gettingDefaultTopicFailed(messageTypeClass, e);
         }
@@ -118,7 +118,7 @@ public class KafkaSequentialInboxMessageConsumerFactory {
     private ConcurrentKafkaListenerContainerFactory<AvroMessageKey, AvroMessage> getKafkaListenerContainerFactory(String clusterName) {
         try {
             return (ConcurrentKafkaListenerContainerFactory<AvroMessageKey, AvroMessage>) beanFactory.getBean(jeapKafkaBeanNames.getListenerContainerFactoryBeanName(clusterName));
-        } catch (NoSuchBeanDefinitionException exception) {
+        } catch (NoSuchBeanDefinitionException _) {
             log.error("No kafkaListenerContainerFactory found for cluster with name '{}'", clusterName);
             throw new IllegalStateException("No kafkaListenerContainerFactory found for cluster with name " + clusterName);
         }

@@ -3,7 +3,6 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest;
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
 import ch.admin.bit.jme.test.JmeEnumTestEvent;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
@@ -11,7 +10,6 @@ import java.util.UUID;
 
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.*;
 
-@Slf4j
 @TestPropertySource(properties = "jeap.messaging.sequential-inbox.config-location=classpath:/messaging/jeap-sequential-inbox-three-messages.yml")
 class SequentialInboxRecordingIT extends SequentialInboxWithPreRecordingITBase {
 

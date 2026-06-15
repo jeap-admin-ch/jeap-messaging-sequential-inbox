@@ -7,7 +7,6 @@ import ch.admin.bit.jeap.messaging.kafka.interceptor.JeapKafkaMessageCallback;
 import ch.admin.bit.jeap.messaging.sequentialinbox.spring.MessageHandlerProvider;
 import ch.admin.bit.jeap.messaging.sequentialinbox.spring.SequentialInboxMessageHandler;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -18,7 +17,6 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 class MessageHandlerService {
 
     private static final DefaultTransactionDefinition NOT_SUPPORTED = new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_NOT_SUPPORTED);

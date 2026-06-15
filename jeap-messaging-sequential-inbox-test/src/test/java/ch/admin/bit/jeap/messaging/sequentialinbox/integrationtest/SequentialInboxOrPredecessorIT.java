@@ -3,7 +3,6 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest;
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
 import ch.admin.bit.jme.test.JmeEnumTestEvent;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
@@ -11,12 +10,11 @@ import java.util.UUID;
 
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.*;
 
-@Slf4j
 @TestPropertySource(properties = "jeap.messaging.sequential-inbox.config-location=classpath:/messaging/jeap-sequential-inbox-or-predecessor.yml")
 class SequentialInboxOrPredecessorIT extends SequentialInboxITBase {
 
     @Test
-    void testInbox_messageWithoutPredecessor_processedSuccessfully() {
+    void inboxMessageWithoutPredecessorProcessedSuccessfully() {
         // given: a test event
         UUID contextId = randomContextId();
         JmeDeclarationCreatedEvent event = createDeclarationCreatedEvent(contextId);
@@ -32,7 +30,7 @@ class SequentialInboxOrPredecessorIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testInbox_successorHandledAfterPredecessor() {
+    void inboxSuccessorHandledAfterPredecessor() {
         // given: an event with two ORed predecessors
         UUID contextId = randomContextId();
         JmeEnumTestEvent successor = createEnumTestEvent(contextId);

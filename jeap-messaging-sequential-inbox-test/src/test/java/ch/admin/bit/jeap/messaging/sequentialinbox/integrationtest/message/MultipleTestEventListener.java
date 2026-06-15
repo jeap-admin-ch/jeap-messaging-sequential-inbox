@@ -17,13 +17,17 @@ public class MultipleTestEventListener {
 
     private final MessageRecorder messageRecorder;
 
-    public static boolean failOnJmeSimpleTestEvent = false;
+    private static volatile boolean failOnJmeSimpleTestEvent;
+
+    public static void setFailOnJmeSimpleTestEvent(boolean failOnJmeSimpleTestEvent) {
+        MultipleTestEventListener.failOnJmeSimpleTestEvent = failOnJmeSimpleTestEvent;
+    }
 
     @SequentialInboxMessageListener
     @Transactional
     public void onEvent(AvroMessageKey key, JmeSimpleTestEvent message) {
         if (failOnJmeSimpleTestEvent) {
-            throw new RuntimeException("Failing on JmeSimpleTestEvent");
+            throw new ListenerFailureException("Failing on JmeSimpleTestEvent");
         }
 
         messageRecorder.recordMessage(key, message);
@@ -42,5 +46,11 @@ public class MultipleTestEventListener {
                 .describedAs("No transaction should be active in the listener method - " +
                         "the sequential inbox should suspend the transaction while invoking the listener")
                 .isFalse();
+    }
+
+    private static final class ListenerFailureException extends IllegalStateException {
+        private ListenerFailureException(String message) {
+            super(message);
+        }
     }
 }

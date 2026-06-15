@@ -31,8 +31,8 @@ public class ErrorHandlingService {
                                                           BufferedMessage bufferedMessage) {
         log.debug("Sending deleted sequenced message with id {} from sequence instance id {} to error handler",
                 sequencedMessage.getId(), sequenceInstance.getId());
-        try (TraceContextScope _ =
-                     bufferedMessageTracing.updateCurrentTraceContext(sequencedMessage.getTraceContext())) {
+        TraceContextScope traceContextScope = bufferedMessageTracing.updateCurrentTraceContext(sequencedMessage.getTraceContext());
+        try (traceContextScope) {
             Map<String, byte[]> headers = messageRepository.getHeaders(sequencedMessage);
             Optional<DeserializedMessage> deserializedMessageOpt = getDeserializedMessage(sequencedMessage, bufferedMessage);
             deserializedMessageOpt.ifPresent(d ->
@@ -51,7 +51,7 @@ public class ErrorHandlingService {
     private Optional<DeserializedMessage> getDeserializedMessage(SequencedMessage sequencedMessage, BufferedMessage bufferedMessage) {
         try {
             return Optional.of(inboxDeserializer.deserialize(sequencedMessage, bufferedMessage));
-        } catch (Exception ex) {
+        } catch (Exception _) {
             return Optional.empty();
         }
     }
@@ -76,7 +76,8 @@ public class ErrorHandlingService {
         }
 
         @Override
-        public @Nullable String getDescription() {
+        @Nullable
+        public String getDescription() {
             return "This message expired while waiting for its predecessor. Fix the problem with the missing predecessor and then resend this message.";
         }
 
@@ -91,7 +92,8 @@ public class ErrorHandlingService {
         }
 
         @Override
-        public @Nullable String getStackTraceAsString() {
+        @Nullable
+        public String getStackTraceAsString() {
             return null;
         }
 

@@ -8,7 +8,6 @@ import ch.admin.bit.jeap.messaging.kafka.signature.SignatureHeaders;
 import ch.admin.bit.jeap.messaging.sequentialinbox.housekeeping.SequentialInboxHousekeepingService;
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -19,15 +18,18 @@ import java.util.UUID;
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 class SequentialInboxHousekeepingIT extends SequentialInboxITBase {
 
-    @Autowired
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    private SequentialInboxHousekeepingService housekeepingService;
+    private final SequentialInboxHousekeepingService housekeepingService;
+
+    @Autowired
+    SequentialInboxHousekeepingIT(SequentialInboxHousekeepingService housekeepingService) {
+        this.housekeepingService = housekeepingService;
+    }
 
     @Test
-    void testHousekeeping_deleteSequencesReadyForRemoval() {
+    void housekeepingDeleteSequencesReadyForRemoval() {
         // given: two open sequences contextIdExpired and contextIdForRemoval
         // and the buffered message value of contextIdForRemoval
         final UUID contextIdExpired = randomContextId();
@@ -87,7 +89,7 @@ class SequentialInboxHousekeepingIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testHousekeeping_deleteClosedSequences() {
+    void housekeepingDeleteClosedSequences() {
         // given: a test event with a predecessor that is buffered and waiting
         UUID contextIdClosed = randomContextId();
         UUID contextIdOpen = randomContextId();
@@ -115,7 +117,7 @@ class SequentialInboxHousekeepingIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testHousekeeping_markExpiredSequencesForDelayedRemoval() {
+    void housekeepingMarkExpiredSequencesForDelayedRemoval() {
         // given: open sequences, one expired and one not expired
         UUID contextIdExpired = randomContextId();
         UUID contextIdNotExpired = randomContextId();

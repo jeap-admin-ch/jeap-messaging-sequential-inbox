@@ -6,7 +6,6 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.encryption.Cr
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstanceState;
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -31,14 +30,17 @@ import static org.mockito.ArgumentMatchers.eq;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = {TestApp.class, CryptoServiceTestConfig.class}
 )
-@Slf4j
 @TestPropertySource(properties = "jeap.messaging.sequential-inbox.config-location=classpath:/messaging/jeap-sequential-inbox-for-encryption-and-signature.yml")
 @ActiveProfiles({"message-encryption-enabled", "key-id-crypto-service"})
 @ExtendWith(MockitoExtension.class)
 class SequentialInboxWithEncryptionIT extends SequentialInboxITBase {
 
+    protected final KeyIdCryptoService keyIdCryptoService;
+
     @Autowired
-    protected KeyIdCryptoService keyIdCryptoService;
+    SequentialInboxWithEncryptionIT(KeyIdCryptoService keyIdCryptoService) {
+        this.keyIdCryptoService = keyIdCryptoService;
+    }
 
     @Captor
     ArgumentCaptor<byte[]> plainMessageCaptor;
@@ -47,7 +49,7 @@ class SequentialInboxWithEncryptionIT extends SequentialInboxITBase {
     ArgumentCaptor<byte[]> encryptedMessageCaptor;
 
     @Test
-    void encryptMessage_and_receiveEncryptedMessage() {
+    void encryptMessageAndReceiveEncryptedMessage() {
 
         final KeyId testKeyId = KeyId.of("testKey");
         UUID contextId = randomContextId();

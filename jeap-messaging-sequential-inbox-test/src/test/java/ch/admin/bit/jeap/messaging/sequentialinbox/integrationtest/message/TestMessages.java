@@ -8,14 +8,20 @@ import java.util.UUID;
 
 public class TestMessages {
 
+    private static final String DEFAULT_SERVICE_NAME = "test";
+    private static final String DEFAULT_MESSAGE = "test";
+
+    private TestMessages() {
+    }
+
     public static JmeSimpleTestEvent createJmeSimpleTestEvent(UUID contextId) {
-        return createJmeSimpleTestEvent(contextId, "test");
+        return createJmeSimpleTestEvent(contextId, DEFAULT_SERVICE_NAME);
     }
 
     public static JmeSimpleTestEvent createJmeSimpleTestEvent(UUID contextId, String serviceName) {
         return JmeSimpleTestEventBuilder.create()
                 .idempotenceId(randomIdempotenceIdString())
-                .message("test")
+                .message(DEFAULT_MESSAGE)
                 .processId(contextId.toString())
                 .serviceName(serviceName)
                 .build();
@@ -26,12 +32,12 @@ public class TestMessages {
                 .idempotenceId(randomIdempotenceIdString())
                 .message(flavour.name())
                 .processId(contextId.toString())
-                .serviceName("test")
+                .serviceName(DEFAULT_SERVICE_NAME)
                 .build();
     }
 
     public static JmeDeclarationCreatedEvent createDeclarationCreatedEvent(UUID contextId) {
-        return createDeclarationCreatedEvent(randomIdempotenceId(), contextId, "test");
+        return createDeclarationCreatedEvent(randomIdempotenceId(), contextId, DEFAULT_MESSAGE);
     }
 
     public static JmeDeclarationCreatedEvent createDeclarationCreatedEvent(String message) {
@@ -39,11 +45,11 @@ public class TestMessages {
     }
 
     public static JmeDeclarationCreatedEvent createDeclarationCreatedEvent(UUID idempotenceId, UUID contextId) {
-        return createDeclarationCreatedEvent(idempotenceId, contextId, "test");
+        return createDeclarationCreatedEvent(idempotenceId, contextId, DEFAULT_MESSAGE);
     }
 
     public static JmeDeclarationCreatedEvent createDeclarationCreatedEvent(UUID contextId, String serviceName) {
-        return createDeclarationCreatedEvent(randomIdempotenceId(), contextId, "test", serviceName);
+        return createDeclarationCreatedEvent(randomIdempotenceId(), contextId, DEFAULT_MESSAGE, serviceName);
     }
 
     private static JmeDeclarationCreatedEvent createDeclarationCreatedEvent(UUID idempotenceId, UUID contextId, String message) {
@@ -70,7 +76,7 @@ public class TestMessages {
     public static JmeEnumTestEvent createEnumTestEvent(UUID contextId) {
         return JmeEnumTestEventBuilder.create()
                 .idempotenceId(randomIdempotenceIdString())
-                .message("test")
+                .message(DEFAULT_MESSAGE)
                 .processId(contextId.toString())
                 .build();
     }

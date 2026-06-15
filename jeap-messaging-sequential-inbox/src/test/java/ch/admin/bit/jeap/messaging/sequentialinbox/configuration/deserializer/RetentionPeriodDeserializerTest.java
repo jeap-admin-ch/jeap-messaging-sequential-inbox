@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RetentionPeriodDeserializerTest {
 
     @Test
-    void deserialize_durationStyle() throws Exception {
+    void deserializeDurationStyle() throws IOException {
         RetentionPeriodDeserializer deserializer = new RetentionPeriodDeserializer();
 
         String json = """
@@ -26,7 +26,7 @@ class RetentionPeriodDeserializerTest {
     }
 
     @Test
-    void deserialize_simpleStyle() throws Exception {
+    void deserializeSimpleStyle() throws IOException {
         RetentionPeriodDeserializer deserializer = new RetentionPeriodDeserializer();
 
         String json = """
@@ -39,7 +39,7 @@ class RetentionPeriodDeserializerTest {
     }
 
     @Test
-    void deserialize_nullValue() throws Exception {
+    void deserializeNullValue() throws IOException {
         RetentionPeriodDeserializer deserializer = new RetentionPeriodDeserializer();
 
         String json = "null";

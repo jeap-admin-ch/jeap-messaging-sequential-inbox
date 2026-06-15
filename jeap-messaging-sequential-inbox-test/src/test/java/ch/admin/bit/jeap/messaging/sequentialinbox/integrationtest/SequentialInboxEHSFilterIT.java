@@ -1,7 +1,6 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest;
 
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.junit.jupiter.api.Test;
@@ -12,12 +11,11 @@ import java.util.UUID;
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.createDeclarationCreatedEvent;
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.randomContextId;
 
-@Slf4j
 @TestPropertySource(properties = "jeap.messaging.kafka.expose-message-key-to-consumer=true")
 class SequentialInboxEHSFilterIT extends SequentialInboxITBase {
 
     @Test
-    void testInbox_messageWithoutPredecessorButWithOtherService_notProcessed() throws InterruptedException {
+    void testInbox_messageWithoutPredecessorButWithOtherService_notProcessed() {
         // given: a test event
         UUID contextId = randomContextId();
         JmeDeclarationCreatedEvent event1 = createDeclarationCreatedEvent(contextId);

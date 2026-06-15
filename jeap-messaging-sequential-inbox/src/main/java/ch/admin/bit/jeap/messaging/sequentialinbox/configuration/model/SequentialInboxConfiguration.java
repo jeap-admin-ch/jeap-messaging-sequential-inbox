@@ -3,13 +3,11 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model;
 import ch.admin.bit.jeap.messaging.avro.AvroMessage;
 import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.deserializer.SequentialInboxConfigurationException;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
 import static java.util.stream.Collectors.toSet;
 
-@Slf4j
 public class SequentialInboxConfiguration {
 
     @JsonProperty("sequences")

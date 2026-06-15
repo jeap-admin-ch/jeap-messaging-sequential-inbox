@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +19,8 @@ import java.util.Map;
 @Configuration
 @JeapMessageProducerContract(value= JmeDeclarationCreatedEvent.TypeRef.class, encryptionKeyId = "testKey")
 public class CryptoServiceTestConfig {
+
+    private static final String TEST_KEY_PATH = Paths.get("test", "key").toString();
 
     @Bean
     public TestKeyReferenceCryptoService keyReferenceCryptoService() {
@@ -27,7 +30,7 @@ public class CryptoServiceTestConfig {
     @Bean
     public KeyIdCryptoService keyIdCryptoService() {
         return Mockito.spy(new TestKeyIdCryptoService(keyReferenceCryptoService(),
-                Map.of(KeyId.of("testKey"), new KeyReference("test/key"))));
+                Map.of(KeyId.of("testKey"), new KeyReference(TEST_KEY_PATH))));
     }
 
     @Bean

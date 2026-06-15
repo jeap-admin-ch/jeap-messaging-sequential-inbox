@@ -4,7 +4,6 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.Multi
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
 import ch.admin.bit.jme.test.JmeEnumTestEvent;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
@@ -12,12 +11,11 @@ import java.util.UUID;
 
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.*;
 
-@Slf4j
 @TestPropertySource(properties = "jeap.messaging.sequential-inbox.config-location=classpath:/messaging/jeap-sequential-inbox-two-successors.yml")
 class SequentialInboxTwoSuccessorsIT extends SequentialInboxITBase {
 
     @Test
-    void testInbox_twoMessagesWithPredecessors_bufferedAndThenProcessedAfterPredecessorHandled_failOneThenRetry() {
+    void inboxTwoMessagesWithPredecessorsBufferedAndThenProcessedAfterPredecessorHandledFailOneThenRetry() {
         // given: two events sharing a predecessor
         UUID contextId = randomContextId();
         JmeDeclarationCreatedEvent predecessor = createDeclarationCreatedEvent(contextId);
@@ -36,7 +34,7 @@ class SequentialInboxTwoSuccessorsIT extends SequentialInboxITBase {
         assertMessageStateWaitingAndBuffered(successorTwo);
 
         // when: sending the predecessor event and provoking a failure for successor one
-        MultipleTestEventListener.failOnJmeSimpleTestEvent = true;
+        MultipleTestEventListener.setFailOnJmeSimpleTestEvent(true);
         sendSync(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, predecessor);
 
         // then: assert that the predecessor event was consumed by the message listener
@@ -52,7 +50,7 @@ class SequentialInboxTwoSuccessorsIT extends SequentialInboxITBase {
         assertSequenceOpen(contextId);
 
         // when: retrying the failed message
-        MultipleTestEventListener.failOnJmeSimpleTestEvent = false;
+        MultipleTestEventListener.setFailOnJmeSimpleTestEvent(false);
         sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, successorOne);
 
         // then: assert that the successor event was consumed by the message listener and the sequence is closed

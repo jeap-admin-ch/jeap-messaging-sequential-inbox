@@ -40,15 +40,21 @@ class MessageRepositoryTest {
     static class TestConfig {
     }
 
-    @Autowired
-    private MessageRepository messageRepository;
-    @Autowired
-    private SequenceInstanceRepository sequenceInstanceRepository;
+    private final MessageRepository messageRepository;
+    private final SequenceInstanceRepository sequenceInstanceRepository;
+    private final TestEntityManager testEntityManager;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    TestEntityManager testEntityManager;
-    @Autowired
-    JdbcTemplate jdbcTemplate;
+    MessageRepositoryTest(MessageRepository messageRepository,
+                         SequenceInstanceRepository sequenceInstanceRepository,
+                         TestEntityManager testEntityManager,
+                         JdbcTemplate jdbcTemplate) {
+        this.messageRepository = messageRepository;
+        this.sequenceInstanceRepository = sequenceInstanceRepository;
+        this.testEntityManager = testEntityManager;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     @AfterEach
     void tearDown() {
@@ -59,7 +65,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void saveMessage_withBufferedMessage() {
+    void saveMessageWithBufferedMessage() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         BufferedMessage bufferedMessage = BufferedMessage.builder()
                 .sequenceInstanceId(1L)
@@ -80,7 +86,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void saveMessage_withoutBufferedMessage() {
+    void saveMessageWithoutBufferedMessage() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage sequencedMessage = createSequencedMessage(sequenceInstanceId);
 
@@ -91,7 +97,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void getProcessedMessageTypesInSequenceInNewTransaction_returnsCorrectTypes() {
+    void getProcessedMessageTypesInSequenceInNewTransactionReturnsCorrectTypes() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
 
         SequencedMessage sequencedMessage1 = SequencedMessage.builder()
@@ -123,7 +129,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void getWaitingAndProcessedMessagesInNewTransaction_returnsCorrectMessages() {
+    void getWaitingAndProcessedMessagesInNewTransactionReturnsCorrectMessages() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
 
         SequencedMessage sequencedMessage1 = SequencedMessage.builder()
@@ -155,7 +161,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void getBufferedMessageInNewTransaction_returnsCorrectMessage() {
+    void getBufferedMessageInNewTransactionReturnsCorrectMessage() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage sequencedMessage = SequencedMessage.builder()
                 .sequenceInstanceId(sequenceInstanceId)
@@ -199,7 +205,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void setMessageStateInNewTransaction_updatesStateCorrectly() {
+    void setMessageStateInNewTransactionUpdatesStateCorrectly() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage sequencedMessage = createSequencedMessage(sequenceInstanceId);
         testEntityManager.persist(sequencedMessage);
@@ -214,7 +220,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void setMessageStateInCurrentTransaction_updatesStateCorrectly() {
+    void setMessageStateInCurrentTransactionUpdatesStateCorrectly() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage sequencedMessage = createSequencedMessage(sequenceInstanceId);
         messageRepository.saveMessage(null, sequencedMessage);
@@ -227,7 +233,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void findByMessageTypeAndIdempotenceId_returnsCorrectMessageInNewTransaction() {
+    void findByMessageTypeAndIdempotenceIdReturnsCorrectMessageInNewTransaction() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage sequencedMessage = createSequencedMessage(sequenceInstanceId);
         messageRepository.saveMessage(null, sequencedMessage);
@@ -261,7 +267,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void getWaitingMessagesInNewTransaction_returnsOnlyWaitingMessages() {
+    void getWaitingMessagesInNewTransactionReturnsOnlyWaitingMessages() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
 
         SequencedMessage waitingMessage1 = SequencedMessage.builder()
@@ -306,7 +312,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void deleteNotClosedSequenceInstanceMessages_doesDeleteMessagesForNotClosedSequence() {
+    void deleteNotClosedSequenceInstanceMessagesDoesDeleteMessagesForNotClosedSequence() {
         // Create an OPEN (not closed) sequence instance with messages
         long openSequenceId = createAndPersistSequenceInstance();
         SequencedMessage sequencedMessage = createSequencedMessage(openSequenceId);
@@ -327,7 +333,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void deleteNotClosedSequenceInstanceMessages_doesNotDeleteMessagesForClosedSequence() {
+    void deleteNotClosedSequenceInstanceMessagesDoesNotDeleteMessagesForClosedSequence() {
         // Create a CLOSED sequence instance with messages
         SequenceInstance closedSequence = SequenceInstance.builder()
                 .name("closedTest")
@@ -354,7 +360,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void deleteNotClosedSequenceInstanceMessages_deletesMultipleMessages() {
+    void deleteNotClosedSequenceInstanceMessagesDeletesMultipleMessages() {
         long sequenceId = createAndPersistSequenceInstance();
 
         // Create multiple messages for the same sequence
@@ -379,7 +385,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void clearPendingActionInNewTransaction_clearsPendingAction() {
+    void clearPendingActionInNewTransactionClearsPendingAction() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage sequencedMessage = createSequencedMessage(sequenceInstanceId);
         ReflectionTestUtils.setField(sequencedMessage, "pendingAction", SequencedMessagePendingAction.CONSUME);
@@ -396,7 +402,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void clearPendingActionInNewTransaction_clearsPendingActionAndSetState() {
+    void clearPendingActionInNewTransactionClearsPendingActionAndSetState() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage sequencedMessage = createSequencedMessage(sequenceInstanceId);
         ReflectionTestUtils.setField(sequencedMessage, "pendingAction", SequencedMessagePendingAction.CONSUME);
@@ -414,7 +420,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void traceContext_roundTripsNull_whenNoneWasCapturedAtPersistTime() {
+    void traceContextRoundTripsNullWhenNoneWasCapturedAtPersistTime() {
         // The null-trace-context contract is what BufferedMessageTracing relies on: if no span was active at
         // capture time, the embeddable must come back null on read so replay does not activate a synthetic
         // zeroed SpanContext. Hibernate's default for @Embedded with all-null columns is to materialize null,
@@ -432,7 +438,7 @@ class MessageRepositoryTest {
     }
 
     @Test
-    void getMessagesWithPendingAction_returnsMessagesWithPendingAction() {
+    void getMessagesWithPendingActionReturnsMessagesWithPendingAction() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage messageWithPendingAction = createSequencedMessage(sequenceInstanceId);
         ReflectionTestUtils.setField(messageWithPendingAction, "pendingAction", SequencedMessagePendingAction.CONSUME);

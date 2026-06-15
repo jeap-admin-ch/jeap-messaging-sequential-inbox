@@ -4,7 +4,6 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.actions.SequentialInboxPendin
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstancePendingAction;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessagePendingAction;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,16 +18,19 @@ import java.util.UUID;
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.createJmeSimpleTestEvent;
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.randomContextId;
 
-@Slf4j
 @TestPropertySource(properties = "jeap.messaging.kafka.expose-message-key-to-consumer=true")
 @ContextConfiguration(classes = {SequentialInboxPendingActionsIT.NoOpLockProviderConfig.class})
 class SequentialInboxPendingActionsIT extends SequentialInboxITBase {
 
+    private final SequentialInboxPendingActionsService sequentialInboxPendingActionsService;
+
     @Autowired
-    private SequentialInboxPendingActionsService sequentialInboxPendingActionsService;
+    SequentialInboxPendingActionsIT(SequentialInboxPendingActionsService sequentialInboxPendingActionsService) {
+        this.sequentialInboxPendingActionsService = sequentialInboxPendingActionsService;
+    }
 
     @Test
-    void testInbox_messageWithPredecessor_waitingAndBuffered_pendingActionConsume() {
+    void inboxMessageWithPredecessorWaitingAndBufferedPendingActionConsume() {
         // given: a test event with a predecessor
         UUID contextId = randomContextId();
         JmeSimpleTestEvent event = createJmeSimpleTestEvent(contextId);
@@ -52,7 +54,7 @@ class SequentialInboxPendingActionsIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testInbox_messageWithPredecessor_waitingAndBuffered_pendingActionExpire() {
+    void inboxMessageWithPredecessorWaitingAndBufferedPendingActionExpire() {
         // given: a test event with a predecessor
         UUID contextId = randomContextId();
         JmeSimpleTestEvent event = createJmeSimpleTestEvent(contextId);
@@ -77,7 +79,7 @@ class SequentialInboxPendingActionsIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testInbox_sequenceInstanceOpen_pendingActionClose() {
+    void inboxSequenceInstanceOpenPendingActionClose() {
         // given: a test event with a predecessor
         UUID contextId = randomContextId();
         JmeSimpleTestEvent event = createJmeSimpleTestEvent(contextId);
@@ -100,7 +102,7 @@ class SequentialInboxPendingActionsIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testInbox_sequenceInstanceOpen_pendingActionConsumeAll() {
+    void inboxSequenceInstanceOpenPendingActionConsumeAll() {
         // given: a test event with a predecessor
         UUID contextId = randomContextId();
         JmeSimpleTestEvent event = createJmeSimpleTestEvent(contextId);

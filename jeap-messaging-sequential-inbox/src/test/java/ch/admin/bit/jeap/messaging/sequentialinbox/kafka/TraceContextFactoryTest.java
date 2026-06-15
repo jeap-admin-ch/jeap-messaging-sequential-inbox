@@ -11,6 +11,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TraceContextFactoryTest {
 
+    private static final String TRACE_ID_STRING = "00000000000000010000000000000002";
+
     private static final class StubTraceContextProvider extends TraceContextProvider {
         private final TraceContext toReturn;
         StubTraceContextProvider(TraceContext toReturn) {
@@ -24,23 +26,18 @@ class TraceContextFactoryTest {
     }
 
     @Test
-    void currentTraceContext_propagatesAllFieldsFromProviderToPersistedContext() {
+    void currentTraceContextPropagatesAllFieldsFromProviderToPersistedContext() {
         TraceContextProvider provider = new StubTraceContextProvider(
-                new TraceContext(1L, 2L, 3L, 4L, "00000000000000010000000000000002", Boolean.FALSE));
+                new TraceContext(1L, 2L, 3L, 4L, TRACE_ID_STRING, Boolean.FALSE));
         TraceContextFactory factory = new TraceContextFactory(Optional.of(provider));
 
         SequentialInboxTraceContext result = factory.currentTraceContext();
 
-        assertThat(result.getTraceIdHigh()).isEqualTo(1L);
-        assertThat(result.getTraceId()).isEqualTo(2L);
-        assertThat(result.getSpanId()).isEqualTo(3L);
-        assertThat(result.getParentSpanId()).isEqualTo(4L);
-        assertThat(result.getTraceIdString()).isEqualTo("00000000000000010000000000000002");
-        assertThat(result.getSampled()).isFalse();
+        assertTraceContextContent(result);
     }
 
     @Test
-    void currentTraceContext_returnsNull_whenProviderReturnsNull() {
+    void currentTraceContextReturnsNullWhenProviderReturnsNull() {
         TraceContextProvider provider = new StubTraceContextProvider(null);
         TraceContextFactory factory = new TraceContextFactory(Optional.of(provider));
 
@@ -50,11 +47,20 @@ class TraceContextFactoryTest {
     }
 
     @Test
-    void currentTraceContext_returnsNull_whenNoProviderPresent() {
+    void currentTraceContextReturnsNullWhenNoProviderPresent() {
         TraceContextFactory factory = new TraceContextFactory(Optional.empty());
 
         SequentialInboxTraceContext result = factory.currentTraceContext();
 
         assertThat(result).isNull();
+    }
+
+    private void assertTraceContextContent(SequentialInboxTraceContext result) {
+        assertThat(result.getTraceIdHigh()).isEqualTo(1L);
+        assertThat(result.getTraceId()).isEqualTo(2L);
+        assertThat(result.getSpanId()).isEqualTo(3L);
+        assertThat(result.getParentSpanId()).isEqualTo(4L);
+        assertThat(result.getTraceIdString()).isEqualTo(TRACE_ID_STRING);
+        assertThat(result.getSampled()).isFalse();
     }
 }

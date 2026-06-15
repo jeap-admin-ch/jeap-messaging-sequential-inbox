@@ -16,15 +16,15 @@ class SequentialInboxWithPreRecordingITBase extends SequentialInboxITBase {
     }
 
     protected void givenRecordingIsConfigured() {
-        sequentialInboxService.sequencingStartTimestamp = FUTURE_TIMESTAMP_WHERE_RECORDING_IS_ENABLED;
+        sequentialInboxService.setSequencingStartTimestamp(FUTURE_TIMESTAMP_WHERE_RECORDING_IS_ENABLED);
     }
 
     protected void whenRecordingEndsAndSequencingStarts() {
-        sequentialInboxService.sequencingStartTimestamp = PAST_TIMESTAMP_WHERE_SEQUENCING_STARTED;
+        sequentialInboxService.setSequencingStartTimestamp(PAST_TIMESTAMP_WHERE_SEQUENCING_STARTED);
     }
 
     @AfterEach
     void disableRecordingMode () {
-        sequentialInboxService.sequencingStartTimestamp = null;
+        sequentialInboxService.setSequencingStartTimestamp(null);
     }
 }

@@ -16,8 +16,14 @@ public class DeclarationCreatedEventListener {
     @SequentialInboxMessageListener
     public void onEvent(AvroMessageKey key, JmeDeclarationCreatedEvent message) {
         if (FAILURE.equals(message.getPayload().getMessage())) {
-            throw new RuntimeException(message.getPayload().getMessage());
+            throw new DeclarationListenerException(message.getPayload().getMessage());
         }
         messageRecorder.recordMessage(key, message);
+    }
+
+    private static final class DeclarationListenerException extends IllegalStateException {
+        private DeclarationListenerException(String message) {
+            super(message);
+        }
     }
 }

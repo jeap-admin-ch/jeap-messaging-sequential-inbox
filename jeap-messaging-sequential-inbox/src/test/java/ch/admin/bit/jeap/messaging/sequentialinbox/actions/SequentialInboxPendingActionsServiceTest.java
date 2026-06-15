@@ -44,7 +44,7 @@ class SequentialInboxPendingActionsServiceTest {
     }
 
     @Test
-    void runPendingActionsOnMessages_shouldProcessMessages() {
+    void runPendingActionsOnMessagesShouldProcessMessages() {
         SequencedMessage message1 = mock(SequencedMessage.class);
         SequencedMessage message2 = mock(SequencedMessage.class);
         Page<SequencedMessage> page = new PageImpl<>(List.of(message1, message2));
@@ -57,7 +57,7 @@ class SequentialInboxPendingActionsServiceTest {
     }
 
     @Test
-    void runPendingActionsOnMessages_shouldNotProcessWhenEmpty() {
+    void runPendingActionsOnMessagesShouldNotProcessWhenEmpty() {
         when(messageRepository.getMessagesWithPendingAction(any())).thenReturn(Page.empty());
 
         service.runPendingActionsOnMessages();
@@ -66,7 +66,7 @@ class SequentialInboxPendingActionsServiceTest {
     }
 
     @Test
-    void runPendingActionsOnSequences_shouldProcessSequences() {
+    void runPendingActionsOnSequencesShouldProcessSequences() {
         SequenceInstance seq1 = mock(SequenceInstance.class);
         SequenceInstance seq2 = mock(SequenceInstance.class);
         Page<SequenceInstance> page = new PageImpl<>(List.of(seq1, seq2));
@@ -79,7 +79,7 @@ class SequentialInboxPendingActionsServiceTest {
     }
 
     @Test
-    void runPendingActionsOnSequences_shouldNotProcessWhenEmpty() {
+    void runPendingActionsOnSequencesShouldNotProcessWhenEmpty() {
         when(sequenceInstanceRepository.findAllByPendingActionIsNotNull(any())).thenReturn(Page.empty());
 
         service.runPendingActionsOnSequences();

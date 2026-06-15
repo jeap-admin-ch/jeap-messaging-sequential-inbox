@@ -4,7 +4,6 @@ import ch.admin.bit.jeap.messaging.kafka.tracing.TraceContext;
 import ch.admin.bit.jeap.messaging.kafka.tracing.TraceContextProvider;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequentialInboxTraceContext;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -12,7 +11,6 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class TraceContextFactory {
 

@@ -23,7 +23,7 @@ public class SequentialInboxMessageHandler {
         } catch (InvocationTargetException ite) {
             Throwable cause = throwCauseIfPossible(ite);
             throw SequentialInboxException.handlerMethodInvocationFailed(method, cause == null ? ite : cause);
-        } catch (Exception e) {
+        } catch (ReflectiveOperationException | IllegalArgumentException e) {
             throw SequentialInboxException.handlerMethodReflectiveOperationFailed(method, e);
         }
     }

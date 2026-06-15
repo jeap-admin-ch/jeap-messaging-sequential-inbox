@@ -4,7 +4,6 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model;
 import ch.admin.bit.jeap.messaging.avro.AvroMessage;
 import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.deserializer.SequentialInboxConfigurationException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.ParameterizedType;
@@ -14,7 +13,6 @@ import java.util.*;
 import static java.util.stream.Collectors.*;
 import static org.springframework.util.StringUtils.hasText;
 
-@Slf4j
 @RequiredArgsConstructor
 class ConfigurationValidator {
 

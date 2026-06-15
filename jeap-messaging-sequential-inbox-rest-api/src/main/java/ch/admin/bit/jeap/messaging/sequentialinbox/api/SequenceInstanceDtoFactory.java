@@ -45,8 +45,8 @@ public class SequenceInstanceDtoFactory {
         if (bufferedMessage != null && bufferedMessage.getValue() != null) {
             try {
                 return domainEventDeserializer.toJsonString(sequencedMessage.getClusterName(), sequencedMessage.getTopic(), bufferedMessage.getValue());
-            } catch (IOException e) {
-                throw new IllegalStateException("Cannot deserialize message value", e);
+            } catch (IOException ex) {
+                throw new IllegalStateException("Cannot deserialize message value", ex);
             }
         }
         return null;
@@ -56,8 +56,8 @@ public class SequenceInstanceDtoFactory {
         if (bufferedMessage != null && bufferedMessage.getKey() != null) {
             try {
                 return domainEventDeserializer.toJsonString(sequencedMessage.getClusterName(), sequencedMessage.getTopic(), bufferedMessage.getKey());
-            } catch (IOException e) {
-                throw new IllegalStateException("Cannot deserialize message key", e);
+            } catch (IOException ex) {
+                throw new IllegalStateException("Cannot deserialize message key", ex);
             }
         }
         return null;

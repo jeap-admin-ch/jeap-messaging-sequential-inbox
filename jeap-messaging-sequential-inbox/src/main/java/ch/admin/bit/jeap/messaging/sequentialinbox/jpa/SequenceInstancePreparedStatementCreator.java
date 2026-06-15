@@ -25,7 +25,7 @@ record SequenceInstancePreparedStatementCreator(String name, String contextId, S
                                                 ZonedDateTime createdAt, ZonedDateTime retainUntil)
         implements PreparedStatementCreator, SqlProvider, ResultSetExtractor<Long> {
 
-    private final static String SQL = """
+    private static final String SQL = """
             INSERT INTO sequence_instance (id, name, context_id, state, created_at, retain_until)
             VALUES (nextval('sequence_instance_sequence'), ?, ?, ?, ?, ?) RETURNING id
             """;

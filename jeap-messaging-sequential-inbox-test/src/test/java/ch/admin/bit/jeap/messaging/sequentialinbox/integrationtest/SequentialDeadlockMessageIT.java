@@ -2,11 +2,9 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest;
 
 import ch.admin.bit.jeap.messaging.sequentialinbox.inbox.Transactions;
 import ch.admin.bit.jeap.messaging.sequentialinbox.jpa.SequenceInstanceRepository;
-import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstance;
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
 import ch.admin.bit.jme.test.JmeEnumTestEvent;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +18,14 @@ import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.messag
 @TestPropertySource(properties = "jeap.messaging.sequential-inbox.config-location=classpath:/messaging/jeap-sequential-inbox-three-messages.yml")
 class SequentialDeadlockMessageIT extends SequentialInboxITBase {
 
-    @Autowired
-    private SequenceInstanceRepository sequenceInstanceRepository;
+    private final SequenceInstanceRepository sequenceInstanceRepository;
+    private final Transactions transactions;
 
     @Autowired
-    private Transactions transactions;
+    SequentialDeadlockMessageIT(SequenceInstanceRepository sequenceInstanceRepository, Transactions transactions) {
+        this.sequenceInstanceRepository = sequenceInstanceRepository;
+        this.transactions = transactions;
+    }
 
     private CountDownLatch latch;
 
@@ -34,7 +35,7 @@ class SequentialDeadlockMessageIT extends SequentialInboxITBase {
     }
 
     @Test
-    void testInbox_twoMessagesWithPredecessors_bufferedAndThenProcessedAfterPredecessorHandledAndDeadLockedTheProcessInstance()
+    void inboxTwoMessagesWithPredecessorsBufferedAndThenProcessedAfterPredecessorHandledAndDeadLockedTheProcessInstance()
             throws InterruptedException {
         // given: an event with a predecessor
         UUID contextId = randomContextId();
@@ -56,11 +57,11 @@ class SequentialDeadlockMessageIT extends SequentialInboxITBase {
         Thread lockThread = new Thread(() -> {
             transactions.runInNewTransaction(() -> {
                 long sequenceInstanceId = sequenceInstanceRepository.findIdByNameAndContextId("ThreeSequentialEvents", contextId.toString()).orElseThrow(() -> new IllegalStateException("Sequence instance not found"));
-                SequenceInstance sequenceInstanceLocked = sequenceInstanceRepository.getByIdAndLockForUpdate(sequenceInstanceId, 1000);
+                sequenceInstanceRepository.getByIdAndLockForUpdate(sequenceInstanceId, 1000);
                 try {
                     latchThread.countDown();
                     latch.await(); // Hold the lock
-                } catch (InterruptedException e) {
+                } catch (InterruptedException _) {
                     Thread.currentThread().interrupt();
                 }
             });

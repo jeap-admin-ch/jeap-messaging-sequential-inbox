@@ -5,7 +5,6 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.IceCr
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
 import ch.admin.bit.jme.test.JmeEnumTestEvent;
 import ch.admin.bit.jme.test.JmeSimpleTestEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
@@ -13,9 +12,12 @@ import java.util.UUID;
 
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.*;
 
-@Slf4j
 @TestPropertySource(properties = "jeap.messaging.sequential-inbox.config-location=classpath:/messaging/jeap-sequential-inbox-subtypes.yml")
 class SequentialInboxSubtypeIT extends SequentialInboxITBase {
+
+    private static final String CHOCOLATE = "JmeSimpleTestEvent.CHOCOLATE";
+    private static final String STRAWBERRY = "JmeSimpleTestEvent.STRAWBERRY";
+    private static final String VANILLA = "JmeSimpleTestEvent.VANILLA";
 
     /**
      * This test follows the sequence definition which is defined in the following order:
@@ -63,10 +65,10 @@ class SequentialInboxSubtypeIT extends SequentialInboxITBase {
         // then: assert that the events were buffered and not consumed by the message listener
         assertMessageCountHandledByInbox(5);
         assertMessageNotConsumedByListener(event1, event2, event3, event4, event5);
-        assertMessageStateWaitingAndBuffered(event1, "JmeSimpleTestEvent.CHOCOLATE");
-        assertMessageStateWaitingAndBuffered(event2, "JmeSimpleTestEvent.STRAWBERRY");
-        assertMessageStateWaitingAndBuffered(event3, "JmeSimpleTestEvent.VANILLA");
-        assertMessageStateWaitingAndBuffered(event4, "JmeSimpleTestEvent.CHOCOLATE");
+        assertMessageStateWaitingAndBuffered(event1, CHOCOLATE);
+        assertMessageStateWaitingAndBuffered(event2, STRAWBERRY);
+        assertMessageStateWaitingAndBuffered(event3, VANILLA);
+        assertMessageStateWaitingAndBuffered(event4, CHOCOLATE);
         assertMessageStateWaitingAndBuffered(event5);
         assertSequenceOpen(contextId);
         assertBufferedMessageCount(contextId, 5);
@@ -87,13 +89,13 @@ class SequentialInboxSubtypeIT extends SequentialInboxITBase {
         sendSync(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, event1);
         assertSequencedMessageProcessedSuccessfully(event1);
         sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, event2);
-        assertSequencedMessageProcessedSuccessfully(event2, "JmeSimpleTestEvent.VANILLA");
+        assertSequencedMessageProcessedSuccessfully(event2, VANILLA);
         sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, event3);
-        assertSequencedMessageProcessedSuccessfully(event3, "JmeSimpleTestEvent.STRAWBERRY");
+        assertSequencedMessageProcessedSuccessfully(event3, STRAWBERRY);
         sendSync(JmeEnumTestEvent.TypeRef.DEFAULT_TOPIC, event4);
         assertSequencedMessageProcessedSuccessfully(event4);
         sendSync(JmeSimpleTestEvent.TypeRef.DEFAULT_TOPIC, event5);
-        assertSequencedMessageProcessedSuccessfully(event5, "JmeSimpleTestEvent.CHOCOLATE");
+        assertSequencedMessageProcessedSuccessfully(event5, CHOCOLATE);
 
         // then: assert that no messages were buffered and the sequence is closed
         assertMessageCountHandledByInbox(5);
@@ -121,10 +123,10 @@ class SequentialInboxSubtypeIT extends SequentialInboxITBase {
 
         // then: assert that the events were buffered and not consumed by the message listener
         assertMessageCountHandledByInbox(5);
-        assertMessageStateWaitingAndBuffered(event1, "JmeSimpleTestEvent.CHOCOLATE");
-        assertMessageStateWaitingAndBuffered(event2, "JmeSimpleTestEvent.STRAWBERRY");
-        assertMessageStateWaitingAndBuffered(event3, "JmeSimpleTestEvent.VANILLA");
-        assertMessageStateWaitingAndBuffered(event4, "JmeSimpleTestEvent.CHOCOLATE");
+        assertMessageStateWaitingAndBuffered(event1, CHOCOLATE);
+        assertMessageStateWaitingAndBuffered(event2, STRAWBERRY);
+        assertMessageStateWaitingAndBuffered(event3, VANILLA);
+        assertMessageStateWaitingAndBuffered(event4, CHOCOLATE);
         assertMessageStateWaitingAndBuffered(event5);
         assertBufferedMessageCount(contextId, 5);
 
@@ -134,10 +136,10 @@ class SequentialInboxSubtypeIT extends SequentialInboxITBase {
         // then: assert that the events were consumed by the message listener
         assertMessageCountHandledByInbox(6);
         assertMessageConsumedByListener(event1, event2, event3, event4, event5, predecessor);
-        assertSequencedMessageProcessedSuccessfully(event1, "JmeSimpleTestEvent.CHOCOLATE");
-        assertSequencedMessageProcessedSuccessfully(event2, "JmeSimpleTestEvent.STRAWBERRY");
-        assertSequencedMessageProcessedSuccessfully(event3, "JmeSimpleTestEvent.VANILLA");
-        assertSequencedMessageProcessedSuccessfully(event4, "JmeSimpleTestEvent.CHOCOLATE");
+        assertSequencedMessageProcessedSuccessfully(event1, CHOCOLATE);
+        assertSequencedMessageProcessedSuccessfully(event2, STRAWBERRY);
+        assertSequencedMessageProcessedSuccessfully(event3, VANILLA);
+        assertSequencedMessageProcessedSuccessfully(event4, CHOCOLATE);
         assertSequencedMessageProcessedSuccessfully(event5, predecessor);
         assertSequenceClosed(contextId);
     }
@@ -165,7 +167,7 @@ class SequentialInboxSubtypeIT extends SequentialInboxITBase {
 
         // then: assert that the predecessor and successor events were consumed by the message listener
         assertMessageCountHandledByInbox(3);
-        assertSequencedMessageProcessedSuccessfully(predecessor, "JmeSimpleTestEvent.VANILLA");
+        assertSequencedMessageProcessedSuccessfully(predecessor, VANILLA);
         assertSequencedMessageProcessedSuccessfully(successor);
         assertMessageConsumedByListener(predecessor, successor);
         assertSequenceOpen(contextId);

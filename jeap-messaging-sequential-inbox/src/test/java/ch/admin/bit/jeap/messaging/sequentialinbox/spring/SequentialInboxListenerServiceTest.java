@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 
+import java.util.Objects;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -37,7 +38,7 @@ class SequentialInboxListenerServiceTest {
     }
 
     @Test
-    void startMessageListeners_withValidMessageType() {
+    void startMessageListenersWithValidMessageType() {
         ValidListener bean = new ValidListener();
         mockListener(bean);
 
@@ -48,7 +49,7 @@ class SequentialInboxListenerServiceTest {
     }
 
     @Test
-    void startMessageListeners_withValidMessageTypeForListenerWithKey() {
+    void startMessageListenersWithValidMessageTypeForListenerWithKey() {
         ValidListenerWithKey bean = new ValidListenerWithKey();
         mockListener(bean);
 
@@ -59,7 +60,7 @@ class SequentialInboxListenerServiceTest {
     }
 
     @Test
-    void startMessageListeners_noListenerForConfiguredSequencedMessageType() {
+    void startMessageListenersNoListenerForConfiguredSequencedMessageType() {
         Object noListenerBean = new Object();
         mockListener(noListenerBean);
 
@@ -69,7 +70,7 @@ class SequentialInboxListenerServiceTest {
     }
 
     @Test
-    void startMessageListeners_invalidListenerMethodSignature() {
+    void startMessageListenersInvalidListenerMethodSignature() {
         InvalidListener bean = new InvalidListener();
         mockListener(bean);
 
@@ -79,7 +80,7 @@ class SequentialInboxListenerServiceTest {
     }
 
     @Test
-    void startMessageListeners_invalidListenerMethodSignatureArgs() {
+    void startMessageListenersInvalidListenerMethodSignatureArgs() {
         InvalidListenerArgs bean = new InvalidListenerArgs();
         mockListener(bean);
 
@@ -89,7 +90,7 @@ class SequentialInboxListenerServiceTest {
     }
 
     @Test
-    void startMessageListeners_invalidListenerMethodSignatureNoArgs() {
+    void startMessageListenersInvalidListenerMethodSignatureNoArgs() {
         InvalidListenerNoArgs bean = new InvalidListenerNoArgs();
         mockListener(bean);
 
@@ -99,7 +100,7 @@ class SequentialInboxListenerServiceTest {
     }
 
     @Test
-    void startMessageListeners_invalidListenerMethodSignatureExtraArgs() {
+    void startMessageListenersInvalidListenerMethodSignatureExtraArgs() {
         InvalidListenerExtraArgs bean = new InvalidListenerExtraArgs();
         mockListener(bean);
 
@@ -119,28 +120,30 @@ class SequentialInboxListenerServiceTest {
     private static class ValidListener {
         @SequentialInboxMessageListener
         public void listener(AvroMessage message) {
-            // This is just a test listener, no implementation needed
+            Objects.requireNonNull(message);
         }
     }
 
     private static class ValidListenerWithKey {
         @SequentialInboxMessageListener
         public void listener(AvroMessageKey key, AvroMessage message) {
-            // This is just a test listener, no implementation needed
+            Objects.requireNonNull(key);
+            Objects.requireNonNull(message);
         }
     }
 
     private static class InvalidListener {
         @SequentialInboxMessageListener
         public void listener(Object foo) {
-            // This is just a test listener, no implementation needed
+            Objects.requireNonNull(foo);
         }
     }
 
     private static class InvalidListenerArgs {
         @SequentialInboxMessageListener
         public void listener(AvroMessage message, AvroMessageKey key) {
-            // This is just a test listener, no implementation needed
+            Objects.requireNonNull(message);
+            Objects.requireNonNull(key);
         }
     }
 
@@ -154,7 +157,9 @@ class SequentialInboxListenerServiceTest {
     private static class InvalidListenerExtraArgs {
         @SequentialInboxMessageListener
         public void listener(AvroMessageKey key, AvroMessage message, String foo) {
-            // This is just a test listener, no implementation needed
+            Objects.requireNonNull(key);
+            Objects.requireNonNull(message);
+            Objects.requireNonNull(foo);
         }
     }
 }
