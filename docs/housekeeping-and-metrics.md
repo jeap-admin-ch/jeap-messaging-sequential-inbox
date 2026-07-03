@@ -18,22 +18,30 @@ it cannot finish, the next scheduled run continues the work, possibly on another
 The jobs use ShedLock so only one instance runs them at a time. See
 [Configuration reference](configuration.md) for all housekeeping properties.
 
+> **Before version 10.0.0:** sequences and their messages were deleted immediately when the retention
+> period expired. Messages were not forwarded to the error-handling service. The `delay`-based
+> deferred removal and forwarding behaviour described above was introduced in version 10.0.0.
+
 ## Metrics
 
 The library registers Micrometer meters, recomputed every `metrics.update-rate-minutes` (default 5).
 
-| Metric                                                          | Type  | Tags   | Meaning                                                                  |
-|----------------------------------------------------------------|-------|--------|--------------------------------------------------------------------------|
-| `jeap.messaging.sequential-inbox.waiting-messages`             | gauge | `type` | Buffered (`WAITING`) messages per sequenced message type                 |
-| `jeap.messaging.sequential-inbox.waiting-message-delay`        | gauge | `type` | Current delay of waiting messages per type                               |
-| `jeap.messaging.sequential-inbox.consumed-messages`            | gauge | `type` | Messages consumed by the inbox                                           |
-| `jeap.messaging.sequential-inbox.expiring-soon-sequences`      | gauge | `type` | Open instances past `expiring-percentile` (default 0.75) of retention    |
-| `jeap.messaging.sequential-inbox.retention-period-expired-sequences` | gauge | `type` | Instances whose retention period has elapsed                      |
-| `jeap.messaging.sequential-inbox.deleted-by-housekeeping-sequences`  | gauge | `type` | Instances removed by housekeeping                                |
+| Metric                                                                          | Type    | Tags     | Meaning                                                                  |
+|---------------------------------------------------------------------------------|---------|----------|--------------------------------------------------------------------------|
+| `jeap.messaging.sequential-inbox.waiting-messages`                              | gauge   | `type`   | Buffered (`WAITING`) messages per sequenced message type                 |
+| `jeap.messaging.sequential-inbox.waiting-message-delay`                         | timer   | `type`   | Wait duration recorded when a waiting message is released                |
+| `jeap.messaging.sequential-inbox.consumed-messages`                             | counter | `type`   | Messages consumed by the inbox                                           |
+| `jeap.messaging.sequential-inbox.expiring-soon-sequences`                       | gauge   | `type`   | Open instances past `expiring-percentile` (default 0.75) of retention    |
+| `jeap.messaging.sequential-inbox.retention-period-expired-sequences`            | gauge   | `type`   | Instances whose retention period has elapsed                             |
+| `jeap.messaging.sequential-inbox.deleted-by-housekeeping-sequences`             | counter | `type`   | Instances removed by housekeeping                                        |
+| `jeap.messaging.sequential-inbox.handle-message`                                | timer   | —        | Time to process an incoming message through the inbox                    |
+| `jeap.messaging.sequential-inbox.handle-message-with-pending-action`            | timer   | —        | Time to execute a pending action on a sequenced message                  |
+| `jeap.messaging.sequential-inbox.handle-sequence-with-pending-action`           | timer   | —        | Time to execute a pending action on a sequence instance                  |
+| `jeap.messaging.sequential-inbox.housekeeping.closed`                           | timer   | —        | Time for the housekeeping run that removes closed sequence instances     |
+| `jeap.messaging.sequential-inbox.housekeeping.expired`                          | timer   | —        | Time for the housekeeping run that marks expired sequence instances      |
+| `jeap.messaging.sequential-inbox.housekeeping.delete-for-removal`               | timer   | —        | Time for the housekeeping run that deletes instances flagged for removal |
 
-In addition the sequencing service exposes timers
-(`jeap.messaging.sequential-inbox.handle-message` and the pending-action handlers) with the
-percentiles `0.5, 0.8, 0.95, 0.99`.
+All timers are recorded with percentiles `0.5, 0.8, 0.95, 0.99`.
 
 ## Related
 

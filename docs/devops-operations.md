@@ -11,10 +11,10 @@ pending-actions properties in the [Configuration reference](configuration.md)).
 
 Set on the `sequenced_message.pending_action` column (enum `SequencedMessagePendingAction`):
 
-| Action    | Description                                                       |
-|-----------|------------------------------------------------------------------|
-| `CONSUME` | Process the message now, regardless of its current state         |
-| `EXPIRE`  | Mark the message as consumed without running the handler         |
+| Action    | Description                                                |
+|-----------|------------------------------------------------------------|
+| `CONSUME` | Process the message now, regardless of its current state   |
+| `EXPIRE`  | Mark the message as consumed without running the handler   |
 
 ### Sequence instance actions
 
@@ -35,13 +35,13 @@ dependency to expose it. Endpoints are under `/api` and protected with jEAP sema
 - Read operations require the `sequentialinbox` `view` role.
 - Write operations require the `sequentialinbox` `write` role.
 
-| Method & path                                          | Role  | Description                                                                 |
-|--------------------------------------------------------|-------|-----------------------------------------------------------------------------|
-| `GET /api/sequences?queryType=EXPIRED`                 | view  | List fully expired sequence instances (paged: `pageNumber`, `pageSize`)     |
-| `GET /api/sequences?queryType=EXPIRING`                | view  | List instances past 75% of their retention period                          |
-| `GET /api/sequences/{sequenceName}/{contextId}`        | view  | Get an instance with its sequenced and buffered messages                   |
-| `PUT /api/sequences/{sequenceInstanceId}/pending-action?pendingAction=CLOSE\|CONSUME_ALL` | write | Schedule a pending action on a sequence instance |
-| `PUT /api/messages/{sequencedMessageId}/pending-action?pendingAction=CONSUME\|EXPIRE`     | write | Schedule a pending action on a message            |
+| Method & path                                                                             | Role  | Description                                                             |
+|-------------------------------------------------------------------------------------------|-------|-------------------------------------------------------------------------|
+| `GET /api/sequences?queryType=EXPIRED`                                                    | view  | List fully expired sequence instances (paged: `pageNumber`, `pageSize`) |
+| `GET /api/sequences?queryType=EXPIRING`                                                   | view  | List instances past 75% of their retention period                       |
+| `GET /api/sequences/{sequenceName}/{contextId}`                                           | view  | Get an instance with its sequenced and buffered messages                |
+| `PUT /api/sequences/{sequenceInstanceId}/pending-action?pendingAction=CLOSE\|CONSUME_ALL` | write | Schedule a pending action on a sequence instance                        |
+| `PUT /api/messages/{sequencedMessageId}/pending-action?pendingAction=CONSUME\|EXPIRE`     | write | Schedule a pending action on a message                                  |
 
 Write endpoints only set the pending action; the scheduler performs the work on its next run.
 

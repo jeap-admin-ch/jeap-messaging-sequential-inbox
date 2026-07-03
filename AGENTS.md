@@ -14,7 +14,7 @@ database and replayed later. It builds on `jeap-messaging` and reuses its Avro m
 
 ## Repository layout
 
-```
+```text
 pom.xml                                        # Parent POM (packaging=pom); declares the modules below
 jeap-messaging-sequential-inbox/               # The library
   .../configuration/model/                     # SequentialInboxConfiguration, Sequence, SequencedMessageType,
@@ -63,6 +63,9 @@ Jenkinsfile, publiccode.yml, CHANGELOG.md, LICENSE
 
 When changing public behaviour, update the matching focused file under [docs/](docs/) (one topic per
 file) and the documentation index in the README. Ground every documented fact in the source.
+
+Validate that files under `docs/*.md` are valid Markdown compatible with a Docusaurus site. Also
+validate that Mermaid diagrams in the Markdown files use correct Mermaid syntax.
 
 ## Versioning
 
