@@ -17,6 +17,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - update jeap-spring-boot-security-starter from 23.10.1 to 23.10.2
 - Fix deprecated `@Valid` container annotation on `authServers` in `ResourceServerProperties` (Hibernate Validator warning HV000271)
+- update jeap-messaging from 15.13.1 to 15.13.2
+- update jeap-crypto from 9.11.1 to 9.11.2
+- update jeap-spring-boot-vault-starter from 23.10.1 to 23.10.2
 
 ## [18.13.1] - 2026-07-01
 ### Changed
