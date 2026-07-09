@@ -18,6 +18,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - update jeap-spring-boot-security-starter from 23.10.2 to 23.11.0
 - `jeap-spring-boot-swagger`: translate the actuator OpenAPI group's title and description from German to English ("Monitoring Endpunkte" → "Monitoring Endpoints")
 - Update documentation 
+- update jeap-messaging from 15.14.0 to 15.15.0
+- update jeap-crypto from 9.11.2 to 9.12.0
+- update jeap-spring-boot-vault-starter from 23.10.2 to 23.11.0
 
 ## [18.14.0] - 2026-07-07
 ### Changed
