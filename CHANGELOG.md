@@ -17,6 +17,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - update jeap-spring-boot-security-starter from 23.11.0 to 23.12.0
 - Add OIDC Authorization mock server.
+- update jeap-messaging from 15.15.0 to 15.16.0
+- update jeap-crypto from 9.12.0 to 9.13.0
+- update jeap-spring-boot-vault-starter from 23.11.0 to 23.12.0
 
 ## [18.15.0] - 2026-07-09
 ### Changed
