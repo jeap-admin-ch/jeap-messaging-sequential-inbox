@@ -11,7 +11,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Breaking Changes
 
 - Sequential Inbox idempotence now uses a PostgreSQL-backed atomic claim to prevent concurrent deliveries with the same qualified message type and idempotence ID from being processed or stored more than once.
-- A database schema migration is required before applications are upgraded. The database must contain the new `sequential_inbox_idempotence` table and its index on `sequence_instance_id`.
+- A database schema migration is required before applications are upgraded. The database must contain the new `sequential_inbox_idempotence` table and its index on `sequence_instance_id`. See: [Sequential Inbox Idempotence and Concurrent Message Handling](docs/sequential-inbox-idempotence.md#claim-table)
 - The schema migration is not applied automatically by the library. Applications must add and execute the required migration in their own Flyway setup before deploying this version.
 - Avoid prolonged mixed-version operation during a rolling deployment because instances running an older version do not acquire idempotence claims.
 
