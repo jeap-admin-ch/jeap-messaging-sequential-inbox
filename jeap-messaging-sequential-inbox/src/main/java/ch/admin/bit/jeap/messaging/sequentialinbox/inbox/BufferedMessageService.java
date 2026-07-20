@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -123,7 +124,8 @@ class BufferedMessageService {
     private void recordWaitingMessageCompletedTimer(SequencedMessage sequencedMessage) {
         // Record only the state change from WAITING to PROCESSED, ignore the case when the message is retried from the FAILED state
         if (sequencedMessage.getState() == SequencedMessageState.WAITING) {
-            Duration waitDuration = Duration.between(sequencedMessage.getCreatedAt(), ZonedDateTime.now());
+            Duration waitDuration = Duration.between(
+                    sequencedMessage.getCreatedAt(), ZonedDateTime.now(ZoneId.systemDefault()));
             metricsCollector.onWaitingMessageCompleted(sequencedMessage.getMessageType(), waitDuration);
         }
     }
@@ -150,7 +152,7 @@ class BufferedMessageService {
 
     private void sendMessageToErrorHandlerAndMarkFailed(SequencedMessage sequencedMessage, Exception ex, FailedConsumerRecord failedConsumerRecord) {
         errorServiceSender.accept(failedConsumerRecord, ex);
-        messageRepository.setMessageStateInNewTransaction(sequencedMessage, SequencedMessageState.FAILED);
+        messageRepository.markMessageFailedAndReleaseIdempotenceClaimInNewTransaction(sequencedMessage);
     }
 
     private static List<SequencedMessage> waitingMessagesInModifiableList(List<SequencedMessage> waitingAndProcessedMessages) {

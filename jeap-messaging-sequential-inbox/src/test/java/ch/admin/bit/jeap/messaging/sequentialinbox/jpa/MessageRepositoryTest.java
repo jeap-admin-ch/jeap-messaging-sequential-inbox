@@ -13,6 +13,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -22,9 +25,14 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @ContextConfiguration(classes = MessageRepositoryTest.TestConfig.class)
@@ -55,12 +63,14 @@ class MessageRepositoryTest {
         this.testEntityManager = testEntityManager;
         this.jdbcTemplate = jdbcTemplate;
     }
-
+    @Autowired
+    PlatformTransactionManager transactionManager;
     @AfterEach
     void tearDown() {
         jdbcTemplate.execute("delete from message_header");
         jdbcTemplate.execute("delete from buffered_message");
         jdbcTemplate.execute("delete from sequenced_message");
+        jdbcTemplate.execute("delete from sequential_inbox_idempotence");
         jdbcTemplate.execute("delete from sequence_instance");
     }
 
@@ -94,6 +104,87 @@ class MessageRepositoryTest {
 
         assertThat(testEntityManager.find(SequencedMessage.class, sequencedMessage.getId()))
                 .isNotNull();
+    }
+
+    @Test
+    void schemaKeepsExistingSequencedMessageIdempotenceIndexNonUnique() {
+        String indexDefinition = jdbcTemplate.queryForObject("""
+                SELECT indexdef
+                FROM pg_indexes
+                WHERE tablename = 'sequenced_message'
+                  AND indexname = 'sequenced_message_idempotence_id'
+                """, String.class);
+
+        assertThat(indexDefinition)
+                .contains("CREATE INDEX")
+                .doesNotContain("CREATE UNIQUE INDEX");
+    }
+
+    @Test
+    void createIdempotenceClaim_isGlobalForMessageTypeAcrossSequenceInstances() {
+        long sequenceInstanceId = createAndPersistSequenceInstance();
+        long otherSequenceInstanceId = createAndPersistSequenceInstance();
+        String messageType = "messageType";
+        String idempotenceId = UUID.randomUUID().toString();
+
+        boolean firstClaim = messageRepository.createIdempotenceClaim(
+                messageType, idempotenceId, sequenceInstanceId);
+        boolean duplicateClaim = messageRepository.createIdempotenceClaim(
+                messageType, idempotenceId, otherSequenceInstanceId);
+        boolean otherMessageTypeClaim = messageRepository.createIdempotenceClaim(
+                "otherMessageType", idempotenceId, sequenceInstanceId);
+
+        assertThat(firstClaim).isTrue();
+        assertThat(duplicateClaim).isFalse();
+        assertThat(otherMessageTypeClaim).isTrue();
+    }
+
+    @Test
+    void createIdempotenceClaim_canBeAcquiredAgainAfterRollback() {
+        long sequenceInstanceId = createAndPersistSequenceInstance();
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+        assertThat(messageRepository.createIdempotenceClaim(
+                "messageType", "idempotenceId", sequenceInstanceId)).isTrue();
+        TestTransaction.flagForRollback();
+        TestTransaction.end();
+
+        TestTransaction.start();
+        assertThat(messageRepository.createIdempotenceClaim(
+                "messageType", "idempotenceId", sequenceInstanceId)).isTrue();
+    }
+
+    @Test
+    void createIdempotenceClaim_concurrentClaimWaitsAndLosesAfterWinnerCommits() throws Exception {
+        long sequenceInstanceId = createAndPersistSequenceInstance();
+        String idempotenceId = UUID.randomUUID().toString();
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        CountDownLatch winnerHasClaim = new CountDownLatch(1);
+        CountDownLatch winnerMayCommit = new CountDownLatch(1);
+        CompletableFuture<Boolean> winner = CompletableFuture.supplyAsync(() -> inNewTransaction(() -> {
+            boolean claimCreated = messageRepository.createIdempotenceClaim(
+                    "messageType", idempotenceId, sequenceInstanceId);
+            winnerHasClaim.countDown();
+            await(winnerMayCommit);
+            return claimCreated;
+        }));
+
+        assertThat(winnerHasClaim.await(5, TimeUnit.SECONDS)).isTrue();
+        CompletableFuture<Boolean> loser = CompletableFuture.supplyAsync(() -> inNewTransaction(() ->
+                messageRepository.createIdempotenceClaim(
+                        "messageType", idempotenceId, sequenceInstanceId)));
+
+        assertThatThrownBy(() -> loser.get(200, TimeUnit.MILLISECONDS))
+                .isInstanceOf(java.util.concurrent.TimeoutException.class);
+        winnerMayCommit.countDown();
+
+        assertThat(winner.get(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(loser.get(5, TimeUnit.SECONDS)).isFalse();
+        TestTransaction.start();
     }
 
     @Test
@@ -220,6 +311,48 @@ class MessageRepositoryTest {
     }
 
     @Test
+    void markMessageFailedAndReleaseIdempotenceClaim_releasesClaimByPrimaryKey() {
+        long claimSequenceInstanceId = createAndPersistSequenceInstance();
+        long messageSequenceInstanceId = createAndPersistSequenceInstance();
+        SequencedMessage sequencedMessage = createSequencedMessage(messageSequenceInstanceId);
+        testEntityManager.persist(sequencedMessage);
+        assertThat(messageRepository.createIdempotenceClaim(
+                sequencedMessage.getMessageType(), sequencedMessage.getIdempotenceId(), claimSequenceInstanceId))
+                .isTrue();
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        messageRepository.markMessageFailedAndReleaseIdempotenceClaimInNewTransaction(sequencedMessage);
+
+        TestTransaction.start();
+        SequencedMessage updatedMessage = testEntityManager.find(SequencedMessage.class, sequencedMessage.getId());
+        assertThat(updatedMessage.getState()).isEqualTo(SequencedMessageState.FAILED);
+        assertThat(jdbcTemplate.queryForObject("""
+                SELECT count(*) FROM sequential_inbox_idempotence
+                WHERE message_type = ? AND idempotence_id = ?
+                """, Integer.class, sequencedMessage.getMessageType(), sequencedMessage.getIdempotenceId()))
+                .isZero();
+        assertThat(messageRepository.createIdempotenceClaim(
+                sequencedMessage.getMessageType(), sequencedMessage.getIdempotenceId(), messageSequenceInstanceId))
+                .isTrue();
+    }
+
+    @Test
+    void markMessageFailedAndReleaseIdempotenceClaim_keepsFailedStateWhenClaimIsAlreadyAbsent() {
+        long sequenceInstanceId = createAndPersistSequenceInstance();
+        SequencedMessage sequencedMessage = createSequencedMessage(sequenceInstanceId);
+        testEntityManager.persist(sequencedMessage);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        messageRepository.markMessageFailedAndReleaseIdempotenceClaimInNewTransaction(sequencedMessage);
+
+        TestTransaction.start();
+        SequencedMessage updatedMessage = testEntityManager.find(SequencedMessage.class, sequencedMessage.getId());
+        assertThat(updatedMessage.getState()).isEqualTo(SequencedMessageState.FAILED);
+    }
+
+    @Test
     void setMessageStateInCurrentTransactionUpdatesStateCorrectly() {
         long sequenceInstanceId = createAndPersistSequenceInstance();
         SequencedMessage sequencedMessage = createSequencedMessage(sequenceInstanceId);
@@ -240,7 +373,8 @@ class MessageRepositoryTest {
         TestTransaction.flagForCommit();
         TestTransaction.end();
 
-        Optional<SequencedMessage> result = messageRepository.findByMessageTypeAndIdempotenceIdInNewTransaction("type", "idempotenceId");
+        Optional<SequencedMessage> result = messageRepository.findByMessageTypeAndIdempotenceIdInNewTransaction(
+                sequencedMessage.getMessageType(), sequencedMessage.getIdempotenceId());
 
         assertThat(result)
                 .isPresent()
@@ -476,7 +610,7 @@ class MessageRepositoryTest {
                 .sequenceInstanceId(instanceId)
                 .messageType(type)
                 .sequencedMessageId(UUID.randomUUID())
-                .idempotenceId("idempotenceId")
+                .idempotenceId(UUID.randomUUID().toString())
                 .clusterName("cluster")
                 .topic("topic")
                 .state(SequencedMessageState.WAITING)
@@ -491,6 +625,23 @@ class MessageRepositoryTest {
                 .state(SequenceInstanceState.OPEN)
                 .retentionPeriod(Duration.ofDays(7))
                 .build());
+    }
+
+    private <T> T inNewTransaction(Supplier<T> supplier) {
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        return transaction.execute(ignored -> supplier.get());
+    }
+
+    private static void await(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Timed out waiting for concurrent claim test");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for concurrent claim test", e);
+        }
     }
 
     private BufferedMessage createBufferedMessageWithOneHeader(long sequenceInstanceId) {

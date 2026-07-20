@@ -6,6 +6,7 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessage;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequencedMessageState;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
@@ -22,6 +23,7 @@ import static java.util.stream.Collectors.toMap;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class MessageRepository {
 
     private static final Set<SequencedMessageState> WAITING_AND_PROCESSED_STATE = Set.of(SequencedMessageState.WAITING, SequencedMessageState.PROCESSED);
@@ -72,6 +74,29 @@ public class MessageRepository {
         sequencedMessageRepository.updateStateById(sequencedMessage.getId(), sequencedMessageState.name());
     }
 
+    /**
+     * Marks a buffered processing attempt as failed and releases its committed idempotence claim atomically.
+     * A later delivery can therefore claim and retry the message, while no delivery can observe an available
+     * claim before the FAILED state has been committed.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
+    public void markMessageFailedAndReleaseIdempotenceClaimInNewTransaction(SequencedMessage sequencedMessage) {
+        sequencedMessageRepository.updateStateById(sequencedMessage.getId(), SequencedMessageState.FAILED.name());
+        int deletedClaims = entityManager.createNativeQuery("""
+                        DELETE FROM sequential_inbox_idempotence
+                        WHERE message_type = ?1
+                          AND idempotence_id = ?2
+                        """)
+                .setParameter(1, sequencedMessage.getMessageType())
+                .setParameter(2, sequencedMessage.getIdempotenceId())
+                .executeUpdate();
+        if (deletedClaims == 0) {
+            log.warn("No idempotence claim found while marking sequenced message {} of type {} with idempotence ID {} as FAILED. " +
+                     "The message remains retryable, but the missing claim indicates previously modified or inconsistent Inbox state.",
+                    sequencedMessage.getId(), sequencedMessage.getMessageType(), sequencedMessage.getIdempotenceId());
+        }
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     public void clearPendingActionInNewTransaction(SequencedMessage sequencedMessage) {
         sequencedMessageRepository.clearPendingActionById(sequencedMessage.getId());
@@ -90,6 +115,21 @@ public class MessageRepository {
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     public Optional<SequencedMessage> findByMessageTypeAndIdempotenceIdInNewTransaction(String messageType, String idempotenceId) {
         return sequencedMessageRepository.findByMessageTypeAndIdempotenceId(messageType, idempotenceId);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public boolean createIdempotenceClaim(String messageType, String idempotenceId, long sequenceInstanceId) {
+        int insertedRows = entityManager.createNativeQuery("""
+                        INSERT INTO sequential_inbox_idempotence
+                            (message_type, idempotence_id, sequence_instance_id, created_at)
+                        VALUES (?1, ?2, ?3, NOW())
+                        ON CONFLICT (message_type, idempotence_id) DO NOTHING
+                        """)
+                .setParameter(1, messageType)
+                .setParameter(2, idempotenceId)
+                .setParameter(3, sequenceInstanceId)
+                .executeUpdate();
+        return insertedRows == 1;
     }
 
     /**

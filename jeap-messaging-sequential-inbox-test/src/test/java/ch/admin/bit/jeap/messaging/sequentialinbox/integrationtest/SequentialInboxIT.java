@@ -5,6 +5,7 @@ import ch.admin.bit.jeap.messaging.avro.errorevent.MessageProcessingFailedEvent;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.DeclarationCreatedEventListener;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.MultipleTestEventListener;
 import ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages;
+import ch.admin.bit.jeap.messaging.sequentialinbox.spring.MessageHandlerProvider;
 import ch.admin.bit.jme.declaration.JmeDeclarationCreatedEvent;
 import ch.admin.bit.jme.test.BeanReferenceMessageKey;
 import ch.admin.bit.jme.test.JmeEnumTestEvent;
@@ -13,11 +14,15 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.Test;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.createDeclarationCreatedEvent;
@@ -26,11 +31,15 @@ import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.messag
 import static ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessages.randomContextId;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 @TestPropertySource(properties = "jeap.messaging.kafka.expose-message-key-to-consumer=true")
 class SequentialInboxIT extends SequentialInboxITBase {
 
     private static final String JME_SIMPLE_TEST_EVENT = "JmeSimpleTestEvent";
+
+    @Autowired
+    private MessageHandlerProvider messageHandlerProvider;
 
     @Test
     void inboxMessageWithoutPredecessorProcessedSuccessfully() {
@@ -102,6 +111,39 @@ class SequentialInboxIT extends SequentialInboxITBase {
         assertMessageNotConsumedByListener(event2);
         assertSequenceOfMessages(contextId, event1);
         assertSequenceOpen(contextId);
+    }
+
+    @Test
+    void testInbox_concurrentEventsWithSameIdempotenceId_areClaimedAndProcessedOnlyOnce() {
+        UUID idempotenceId = UUID.randomUUID();
+        UUID contextId = UUID.randomUUID();
+        JmeDeclarationCreatedEvent event1 = createDeclarationCreatedEvent(idempotenceId, contextId);
+        JmeDeclarationCreatedEvent event2 = createDeclarationCreatedEvent(idempotenceId, contextId);
+        var handler = messageHandlerProvider.getHandlerForJeapMessageType(event1.getType().getName());
+
+        ConsumerRecord<AvroMessageKey, ch.admin.bit.jeap.messaging.avro.AvroMessage> record1 =
+                new ConsumerRecord<>(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, 0, 1L, null, event1);
+        ConsumerRecord<AvroMessageKey, ch.admin.bit.jeap.messaging.avro.AvroMessage> record2 =
+                new ConsumerRecord<>(JmeDeclarationCreatedEvent.TypeRef.DEFAULT_TOPIC, 1, 1L, null, event2);
+
+        CompletableFuture<Void> first = CompletableFuture.runAsync(() -> {
+            try (var _ = setTraceContext(111L, false)) {
+                sequentialInboxService.handleMessage(record1, handler, mock(Acknowledgment.class));
+            }
+        });
+        CompletableFuture<Void> second = CompletableFuture.runAsync(() -> {
+            try (var _ = setTraceContext(222L, false)) {
+                sequentialInboxService.handleMessage(record2, handler, mock(Acknowledgment.class));
+            }
+        });
+        CompletableFuture.allOf(first, second).join();
+
+        assertThat(messageRecorder.countConsumedMessagesForContext(contextId)).isEqualTo(1);
+        assertSequencedMessageCount(contextId, 1);
+        assertThat(jdbcTemplate.queryForObject("""
+                SELECT count(*) FROM sequential_inbox_idempotence
+                WHERE message_type = ? AND idempotence_id = ?
+                """, Integer.class, event1.getType().getName(), idempotenceId.toString())).isEqualTo(1);
     }
 
     @Test

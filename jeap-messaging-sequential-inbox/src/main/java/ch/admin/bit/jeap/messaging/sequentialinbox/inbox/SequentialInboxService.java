@@ -17,6 +17,7 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 @Component
@@ -69,10 +70,23 @@ public class SequentialInboxService {
         // If the sequencing start timestamp is set and the current time is before the start timestamp, start the record mode and handle the message immediately.
         // The record activates sequencing with a delay. Until activation, the predecessor messages are recorded (Recording Mode).
         // This is needed to handle messages that need to be newly sequenced, but their predecessor was received before the introduction of the sequence.
-        boolean recordingModeIsEnabled = sequencingStartTimestamp != null && LocalDateTime.now().isBefore(sequencingStartTimestamp);
+        boolean recordingModeIsEnabled = sequencingStartTimestamp != null && LocalDateTime.now(ZoneId.systemDefault()).isBefore(sequencingStartTimestamp);
 
-        // Process the message before acquiring the lock
-        handleMessage(consumerRecord, messageHandler, sequencedMessageType, sequenceInstanceId, sequence, contextId, recordingModeIsEnabled, qualifiedSequencedMessageTypeName);
+        // Atomically claim the idempotence ID before checking and processing the message. A concurrent insert for the
+        // same qualified message type and idempotence ID waits for this transaction. It can only proceed if this
+        // transaction rolls back; after a commit ON CONFLICT on the claim key reports that the claim already exists.
+        tx.runInNewTransaction(() -> {
+            boolean claimCreated = sequencedMessageService.createIdempotenceClaim(
+                    qualifiedSequencedMessageTypeName, avroMessage.getIdentity().getIdempotenceId(), sequenceInstanceId);
+            if (claimCreated) {
+                handleMessage(consumerRecord, messageHandler, sequencedMessageType, sequenceInstanceId, sequence,
+                        contextId, recordingModeIsEnabled, qualifiedSequencedMessageTypeName);
+            } else {
+                log.info("Message {} (id={}) has already been claimed with idempotence ID {}, skipping processing",
+                        qualifiedSequencedMessageTypeName, avroMessage.getIdentity().getId(),
+                        avroMessage.getIdentity().getIdempotenceId());
+            }
+        });
 
         // Lock the sequence instance for update to avoid concurrent access to the inbox for the current context
         tx.runInNewTransaction(() -> {

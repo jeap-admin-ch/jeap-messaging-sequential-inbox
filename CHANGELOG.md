@@ -6,12 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-# Changelog
+## [19.0.0] - 2026-07-20
 
-All notable changes to this project will be documented in this file.
+### Breaking Changes
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
-to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+- Sequential Inbox idempotence now uses a PostgreSQL-backed atomic claim to prevent concurrent deliveries with the same qualified message type and idempotence ID from being processed or stored more than once.
+- A database schema migration is required before applications are upgraded. The database must contain the new `sequential_inbox_idempotence` table and its index on `sequence_instance_id`.
+- The schema migration is not applied automatically by the library. Applications must add and execute the required migration in their own Flyway setup before deploying this version.
+- Avoid prolonged mixed-version operation during a rolling deployment because instances running an older version do not acquire idempotence claims.
+
+See [Sequential Inbox Idempotence and Concurrent Message Handling](docs/sequential-inbox-idempotence.md) for the required schema and processing semantics.
 
 ## [19.0.0] - 2026-07-17
 ### Changed

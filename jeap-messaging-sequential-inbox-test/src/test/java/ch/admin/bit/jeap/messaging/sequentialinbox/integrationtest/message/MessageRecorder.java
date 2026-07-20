@@ -113,6 +113,16 @@ public class MessageRecorder {
                 .noneMatch(e -> e.getIdentity().getId().equals(messageId));
     }
 
+    public synchronized long countConsumedMessagesForContext(UUID contextId) {
+        String expectedProcessId = contextId.toString();
+        return recordedMessages.stream()
+                .filter(message -> !(message instanceof MessageProcessingFailedEvent))
+                .filter(message -> message.getOptionalProcessId()
+                        .map(expectedProcessId::equals)
+                        .orElse(false))
+                .count();
+    }
+
     public void assertMessageProcessingFailedEventConsumedForMessage(AvroMessage message) {
         await().untilAsserted(() ->
                 assertThat(recordedMessages)
@@ -151,9 +161,12 @@ public class MessageRecorder {
     }
 
     private List<SeqMsg> toSeq(UUID contextId) {
+        String expectedProcessId = contextId.toString();
         return recordedMessages.stream()
                 .filter(msg -> !(msg instanceof MessageProcessingFailedEvent))
-                .filter(msg -> msg.getOptionalProcessId().orElseThrow().equals(contextId.toString()))
+                .filter(msg -> msg.getOptionalProcessId()
+                        .map(expectedProcessId::equals)
+                        .orElse(false))
                 .map(SeqMsg::of)
                 .toList();
     }

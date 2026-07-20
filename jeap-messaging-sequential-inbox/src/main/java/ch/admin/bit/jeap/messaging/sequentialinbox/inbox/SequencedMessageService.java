@@ -105,6 +105,10 @@ class SequencedMessageService {
         return messageRepository.findByMessageTypeAndIdempotenceIdInNewTransaction(messageType, idempotenceId);
     }
 
+    boolean createIdempotenceClaim(String messageType, String idempotenceId, long sequenceInstanceId) {
+        return messageRepository.createIdempotenceClaim(messageType, idempotenceId, sequenceInstanceId);
+    }
+
     boolean isReleaseConditionSatisfied(SequencedMessageType sequencedMessageType, long sequenceInstanceId) {
         // Avoid querying the database if there is no release condition. In case the message does not have a release
         // condition (first message in a sequence), it should be processed immediately.
