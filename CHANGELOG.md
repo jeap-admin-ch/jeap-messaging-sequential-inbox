@@ -26,6 +26,7 @@ See [Sequential Inbox Idempotence and Concurrent Message Handling](docs/sequenti
 - update jeap-spring-boot-vault-starter from 23.15.0 to 24.0.0
 
 ## [18.20.0] - 2026-07-17
+
 ### Changed
 - update jeap-messaging from 15.19.0 to 15.20.0
 - `jeap-messaging-glue-schema-registry`: exclude okio, okio-fakefilesystem, wire-schema and kotlin-scripting-compiler(-impl)-embeddable
