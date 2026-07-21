@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [19.1.0] - 2026-07-21
+### Changed
+- update jeap-messaging from 16.0.1 to 16.1.0
+- Complete the migration to the standalone WireMock Spring Boot integration.
+
 ## [19.0.1] - 2026-07-21
 ### Changed
 - update jeap-messaging from 16.0.0 to 16.0.1
