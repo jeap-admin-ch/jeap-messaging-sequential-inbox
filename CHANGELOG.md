@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [19.0.1] - 2026-07-21
+### Changed
+- update jeap-messaging from 16.0.0 to 16.0.1
+- Remove arbitrary PostgreSQL length limits from the idempotent-processing and test example schema.
+
 ## [19.0.0] - 2026-07-20
 
 ### Breaking Changes
