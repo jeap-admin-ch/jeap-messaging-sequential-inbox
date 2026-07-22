@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [19.2.1] - 2026-07-22
+
+### Fixed
+- Fixed a flaky integration test caused by non-thread-safe message recording in the test harness
+
 ## [19.2.0] - 2026-07-22
 
 ### Changed

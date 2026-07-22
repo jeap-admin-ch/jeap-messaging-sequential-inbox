@@ -13,6 +13,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -23,12 +24,12 @@ import static org.awaitility.Awaitility.await;
 public class MessageRecorder {
     private final TraceContextProvider traceContextProvider;
 
-    private final List<AvroMessage> recordedMessages = new ArrayList<>();
+    private final List<AvroMessage> recordedMessages = new CopyOnWriteArrayList<>();
     @Getter
-    private final List<Object> recordedErrorEvents = new ArrayList<>();
-    private final Map<String, Long> traceContextIds = new HashMap<>();
-    private final Map<String, Boolean> traceContextSampled = new HashMap<>();
-    private final Map<String, AvroMessageKey> keyByMessageId = new HashMap<>();
+    private final List<Object> recordedErrorEvents = new CopyOnWriteArrayList<>();
+    private final Map<String, Long> traceContextIds = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, Boolean> traceContextSampled = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, AvroMessageKey> keyByMessageId = Collections.synchronizedMap(new HashMap<>());
 
     public void reset() {
         recordedMessages.clear();
