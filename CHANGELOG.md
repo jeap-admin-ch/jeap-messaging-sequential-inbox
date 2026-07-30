@@ -14,6 +14,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   state and fail with a `NullPointerException`, e.g. when kafka messages are consumed right after startup. Both
   counters are now published together. In addition, a failure to resolve the `MeterRegistry` no longer fails the
   transaction: it is logged once, and the counters are created on a subsequent transaction.
+- update jeap-messaging from 17.4.0 to 17.4.1
+- update jeap-crypto from 10.6.0 to 10.6.1
+- update jeap-spring-boot-vault-starter from 24.6.0 to 24.6.1
 
 ## [20.4.0] - 2026-07-28
 
