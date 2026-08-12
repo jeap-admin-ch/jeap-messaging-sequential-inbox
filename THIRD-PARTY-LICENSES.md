@@ -75,7 +75,6 @@ Apache License Version 2.0
  * Apache Commons Collections - [commons-collections:commons-collections](http://commons.apache.org/collections/)
  * Commons Digester - [commons-digester:commons-digester](http://commons.apache.org/digester/)
  * Apache Commons IO - [commons-io:commons-io](https://commons.apache.org/proper/commons-io/)
- * Apache Commons IO - [commons-io:commons-io](https://commons.apache.org/proper/commons-io/)
  * Apache Commons Logging - [commons-logging:commons-logging](https://commons.apache.org/proper/commons-logging/)
  * Apache Commons Validator - [commons-validator:commons-validator](https://commons.apache.org/proper/commons-validator/)
  * utils - [io.confluent:common-utils](https://confluent.io/common-utils)
