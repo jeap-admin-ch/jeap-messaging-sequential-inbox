@@ -49,7 +49,7 @@ Apache License Version 2.0
  * docker-java-transport - [com.github.docker-java:docker-java-transport](https://github.com/docker-java/docker-java)
  * docker-java-transport-zerodep - [com.github.docker-java:docker-java-transport-zerodep](https://github.com/docker-java/docker-java)
  * JCIP Annotations under Apache License - [com.github.stephenc.jcip:jcip-annotations](http://stephenc.github.com/jcip-annotations)
- * proto-google-common-protos - [com.google.api.grpc:proto-google-common-protos](https://github.com/googleapis/sdk-platform-java)
+ * proto-google-common-protos - [com.google.api.grpc:proto-google-common-protos](https://github.com/googleapis/java-iam/proto-google-common-protos)
  * FindBugs-jsr305 - [com.google.code.findbugs:jsr305](http://findbugs.sourceforge.net/)
  * Gson - [com.google.code.gson:gson](https://github.com/google/gson)
  * error-prone annotations - [com.google.errorprone:error_prone_annotations](https://errorprone.info/error_prone_annotations)
@@ -62,7 +62,7 @@ Apache License Version 2.0
  * Nimbus Content Type - [com.nimbusds:content-type](https://bitbucket.org/connect2id/nimbus-content-type)
  * Nimbus LangTag - [com.nimbusds:lang-tag](https://bitbucket.org/connect2id/nimbus-language-tags)
  * Nimbus JOSE+JWT - [com.nimbusds:nimbus-jose-jwt](https://bitbucket.org/connect2id/nimbus-jose-jwt)
- * OAuth 2.0 SDK with OpenID Connect extensions - [com.nimbusds:oauth2-oidc-sdk](https://bitbucket.org/connect2id/oauth-2.0-sdk-with-openid-connect-extensions)
+ * OAuth 2.0 SDK with OpenID Connect and Federation extensions - [com.nimbusds:oauth2-oidc-sdk](https://bitbucket.org/connect2id/oauth-2.0-sdk-with-openid-connect-extensions)
  * okhttp - [com.squareup.okhttp3:okhttp-jvm](https://square.github.io/okhttp/)
  * okio - [com.squareup.okio:okio-jvm](https://github.com/square/okio/)
  * scala-logging - [com.typesafe.scala-logging:scala-logging_2.13](https://github.com/lightbend/scala-logging)
@@ -85,15 +85,15 @@ Apache License Version 2.0
  * Log Redactor - [io.confluent:logredactor](https://github.com/confluentinc/logredactor)
  * Log Redactor Metrics - [io.confluent:logredactor-metrics](https://github.com/confluentinc/logredactor)
  * context-propagation - [io.micrometer:context-propagation](https://github.com/micrometer-metrics/context-propagation)
- * micrometer-commons - [io.micrometer:micrometer-commons](https://github.com/micrometer-metrics/micrometer)
- * micrometer-core - [io.micrometer:micrometer-core](https://github.com/micrometer-metrics/micrometer)
- * micrometer-jakarta9 - [io.micrometer:micrometer-jakarta9](https://github.com/micrometer-metrics/micrometer)
- * micrometer-observation - [io.micrometer:micrometer-observation](https://github.com/micrometer-metrics/micrometer)
- * micrometer-observation-test - [io.micrometer:micrometer-observation-test](https://github.com/micrometer-metrics/micrometer)
- * micrometer-registry-otlp - [io.micrometer:micrometer-registry-otlp](https://github.com/micrometer-metrics/micrometer)
- * micrometer-registry-prometheus - [io.micrometer:micrometer-registry-prometheus](https://github.com/micrometer-metrics/micrometer)
- * micrometer-tracing - [io.micrometer:micrometer-tracing](https://github.com/micrometer-metrics/tracing)
- * micrometer-tracing-bridge-otel - [io.micrometer:micrometer-tracing-bridge-otel](https://github.com/micrometer-metrics/tracing)
+ * micrometer-commons - [io.micrometer:micrometer-commons](https://github.com/micrometer-metrics/micrometer-commercial)
+ * micrometer-core - [io.micrometer:micrometer-core](https://github.com/micrometer-metrics/micrometer-commercial)
+ * micrometer-jakarta9 - [io.micrometer:micrometer-jakarta9](https://github.com/micrometer-metrics/micrometer-commercial)
+ * micrometer-observation - [io.micrometer:micrometer-observation](https://github.com/micrometer-metrics/micrometer-commercial)
+ * micrometer-observation-test - [io.micrometer:micrometer-observation-test](https://github.com/micrometer-metrics/micrometer-commercial)
+ * micrometer-registry-otlp - [io.micrometer:micrometer-registry-otlp](https://github.com/micrometer-metrics/micrometer-commercial)
+ * micrometer-registry-prometheus - [io.micrometer:micrometer-registry-prometheus](https://github.com/micrometer-metrics/micrometer-commercial)
+ * micrometer-tracing - [io.micrometer:micrometer-tracing](https://github.com/micrometer-metrics/tracing-commercial)
+ * micrometer-tracing-bridge-otel - [io.micrometer:micrometer-tracing-bridge-otel](https://github.com/micrometer-metrics/tracing-commercial)
  * OpenTelemetry Java - [io.opentelemetry:opentelemetry-api](https://github.com/open-telemetry/opentelemetry-java)
  * OpenTelemetry Java - [io.opentelemetry:opentelemetry-common](https://github.com/open-telemetry/opentelemetry-java)
  * OpenTelemetry Java - [io.opentelemetry:opentelemetry-context](https://github.com/open-telemetry/opentelemetry-java)
@@ -144,7 +144,7 @@ Apache License Version 2.0
  * Apache HttpClient - [org.apache.httpcomponents:httpclient](http://hc.apache.org/httpcomponents-client)
  * Apache HttpCore - [org.apache.httpcomponents:httpcore](http://hc.apache.org/httpcomponents-core-ga)
  * Apache HttpClient Mime - [org.apache.httpcomponents:httpmime](http://hc.apache.org/httpcomponents-client)
- * Apache HttpClient - [org.apache.httpcomponents.client5:httpclient5](https://hc.apache.org/httpcomponents-client-5.5.x/5.6.1/httpclient5/)
+ * Apache HttpClient - [org.apache.httpcomponents.client5:httpclient5](https://hc.apache.org/httpcomponents-client-5.6.x/5.6.4/httpclient5/)
  * Apache HttpComponents Core HTTP/1.1 - [org.apache.httpcomponents.core5:httpcore5](https://hc.apache.org/httpcomponents-core-5.4.x/5.4.3/httpcore5/)
  * Apache HttpComponents Core HTTP/2 - [org.apache.httpcomponents.core5:httpcore5-h2](https://hc.apache.org/httpcomponents-core-5.4.x/5.4.3/httpcore5-h2/)
  * Apache Kafka - [org.apache.kafka:kafka-clients](https://kafka.apache.org)
@@ -190,7 +190,7 @@ Apache License Version 2.0
  * Kotlin Stdlib Jdk7 - [org.jetbrains.kotlin:kotlin-stdlib-jdk7](https://kotlinlang.org/)
  * Kotlin Stdlib Jdk8 - [org.jetbrains.kotlin:kotlin-stdlib-jdk8](https://kotlinlang.org/)
  * kotlinx-serialization-core - [org.jetbrains.kotlinx:kotlinx-serialization-core-jvm](https://github.com/Kotlin/kotlinx.serialization)
- * JSpecify annotations - [org.jspecify:jspecify](http://jspecify.org/)
+ * JSpecify annotations - [org.jspecify:jspecify](https://jspecify.dev/)
  * Objenesis - [org.objenesis:objenesis](http://objenesis.org/objenesis)
  * org.opentest4j:opentest4j - [org.opentest4j:opentest4j](https://github.com/ota4j-team/opentest4j)
  * Reflections - [org.reflections:reflections](http://github.com/ronmamo/reflections)
@@ -397,11 +397,6 @@ GNU General Public License, version 2 (GPL2), with the classpath exception
 
  * Jakarta Annotations API - [jakarta.annotation:jakarta.annotation-api](https://projects.eclipse.org/projects/ee4j.ca)
  * jakarta.transaction API - [jakarta.transaction:jakarta.transaction-api](https://projects.eclipse.org/projects/ee4j.jta)
-
-GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1
--------------------------------
-
- * SpotBugs Annotations - [com.github.spotbugs:spotbugs-annotations](https://spotbugs.github.io/)
 
 Go License
 -------------------------------
