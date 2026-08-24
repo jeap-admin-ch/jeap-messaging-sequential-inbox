@@ -41,7 +41,7 @@ public class SequentialInboxConfigurationException extends RuntimeException {
         return new SequentialInboxConfigurationException("Error while loading configuration file: " + location, e);
     }
 
-    public static SequentialInboxConfigurationException configurationFileParsingError(String location, IOException e) {
+    public static SequentialInboxConfigurationException configurationFileParsingError(String location, Exception e) {
         return new SequentialInboxConfigurationException("Error while parsing configuration file: " + location, e);
     }
 

@@ -1,11 +1,9 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.configuration.deserializer;
 
 import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.MessageFilter;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-
-import java.io.IOException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
 class MessageFilterDeserializer extends StdDeserializer<MessageFilter<?>> {
 
@@ -14,7 +12,7 @@ class MessageFilterDeserializer extends StdDeserializer<MessageFilter<?>> {
     }
 
     @Override
-    public MessageFilter<?> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
+    public MessageFilter<?> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
         return SequentialInboxConfigurationUtils.newInstance(jsonParser.getValueAsString(), MessageFilter.class);
     }
 }

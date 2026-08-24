@@ -7,7 +7,7 @@
     <parent>
         <groupId>ch.admin.bit.jeap</groupId>
         <artifactId>jeap-messaging-sequential-inbox-parent</artifactId>
-        <version>20.18.1-SNAPSHOT</version>
+        <version>20.19.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>jeap-messaging-sequential-inbox</artifactId>
@@ -16,12 +16,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <groupId>tools.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.admin.bit.jeap</groupId>

@@ -1,12 +1,11 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.configuration.deserializer;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import org.springframework.boot.convert.DurationStyle;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
-import java.io.IOException;
 import java.time.Duration;
 
 /**
@@ -20,13 +19,12 @@ import java.time.Duration;
     }
 
     @Override
-    public Duration deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-        JsonNode node = jp.getCodec().readTree(jp);
-        if (node.isNull()) {
+    public Duration deserialize(JsonParser jp, DeserializationContext ctxt) {
+        if (jp.hasToken(JsonToken.VALUE_NULL)) {
             return null;
         }
 
-        String text = node.asText();
+        String text = jp.getValueAsString();
         DurationStyle durationStyle = DurationStyle.detect(text);
         return durationStyle.parse(text);
     }

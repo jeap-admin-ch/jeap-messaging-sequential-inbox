@@ -1,11 +1,10 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.configuration.deserializer;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
-import java.io.IOException;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RetentionPeriodDeserializerTest {
 
     @Test
-    void deserializeDurationStyle() throws IOException {
+    void deserializeDurationStyle() {
         RetentionPeriodDeserializer deserializer = new RetentionPeriodDeserializer();
 
         String json = """
@@ -26,7 +25,7 @@ class RetentionPeriodDeserializerTest {
     }
 
     @Test
-    void deserializeSimpleStyle() throws IOException {
+    void deserializeSimpleStyle() {
         RetentionPeriodDeserializer deserializer = new RetentionPeriodDeserializer();
 
         String json = """
@@ -39,7 +38,7 @@ class RetentionPeriodDeserializerTest {
     }
 
     @Test
-    void deserializeNullValue() throws IOException {
+    void deserializeNullValue() {
         RetentionPeriodDeserializer deserializer = new RetentionPeriodDeserializer();
 
         String json = "null";
@@ -48,10 +47,12 @@ class RetentionPeriodDeserializerTest {
         assertThat(duration).isNull();
     }
 
-    private static Duration deserialize(String json, RetentionPeriodDeserializer deserializer) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonParser parser = new JsonFactory().createParser(json);
-        parser.setCodec(objectMapper);
-        return deserializer.deserialize(parser, objectMapper.getDeserializationContext());
+    private static Duration deserialize(String json, RetentionPeriodDeserializer deserializer) {
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Duration.class, deserializer);
+        ObjectMapper objectMapper = JsonMapper.builder()
+                .addModule(module)
+                .build();
+        return objectMapper.readValue(json, Duration.class);
     }
 }
