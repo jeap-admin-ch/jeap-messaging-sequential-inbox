@@ -6,11 +6,13 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.Sequentia
 import ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.SubTypeResolver;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,15 +30,18 @@ public class SequentialInboxConfigurationLoader {
 
     public SequentialInboxConfiguration loadSequenceDeclaration() {
         log.info("Load Sequential Inbox config from location {}", classpathLocation);
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        mapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
-        mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY); // prefer fields over getter/setter for json deserialization
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ContextIdExtractor.class, new ContextIdExtractorDeserializer());
         module.addDeserializer(SubTypeResolver.class, new SubTypeResolverDeserializer());
         module.addDeserializer(MessageFilter.class, new MessageFilterDeserializer());
         module.addDeserializer(Duration.class, new RetentionPeriodDeserializer());
-        mapper.registerModule(module);
+        ObjectMapper mapper = YAMLMapper.builder()
+                .changeDefaultVisibility(visibility -> visibility
+                        .withVisibility(PropertyAccessor.ALL, Visibility.NONE)
+                        .withFieldVisibility(Visibility.ANY)) // prefer fields over getter/setter for deserialization
+                .enable(MapperFeature.ALLOW_FINAL_FIELDS_AS_MUTATORS)
+                .addModule(module)
+                .build();
         SequentialInboxConfiguration sequentialInboxConfiguration = readSequentialInboxConfiguration(mapper);
         sequentialInboxConfiguration.validateAndInitialize();
         log.info("Sequential Inbox config loaded with {} sequences", sequentialInboxConfiguration.getSequenceCount());
@@ -47,7 +52,7 @@ public class SequentialInboxConfigurationLoader {
     private SequentialInboxConfiguration readSequentialInboxConfiguration(ObjectMapper mapper) {
         try {
             return mapper.readValue(loadConfigurationFileInputStream(), SequentialInboxConfiguration.class);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("Error while reading configuration file {}", classpathLocation, e);
             throw SequentialInboxConfigurationException.configurationFileParsingError(classpathLocation, e);
         }
