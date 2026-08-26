@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [20.18.1] - 2026-08-26
+### Changed
+- update jeap-spring-boot-security-starter from 24.20.0 to 24.20.1
+- Exclude the AWS SDK Apache 5 HTTP client when using the URL connection client.
+
 ## [20.18.0] - 2026-08-22
 
 ### Changed
