@@ -9,6 +9,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - update jeap-spring-boot-security-starter from 24.23.0 to 24.23.1
 - Exclude both AWS SDK Apache HTTP clients when using the URL connection client.
+- update jeap-messaging from 18.4.0 to 18.4.1
+- update jeap-crypto from 10.21.0 to 10.21.1
+- update jeap-spring-boot-vault-starter from 24.23.0 to 24.23.1
 
 ## [20.21.0] - 2026-08-27
 
