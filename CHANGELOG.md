@@ -13,6 +13,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Cacheable responses now also emit standards-compliant HTTP dates in the `Expires` header.
 - Resolve the built-in introspection conditions' fallback with `BindResult.orElseGet` instead of `orElse` so that the
   unboxed result is non-null by contract, addressing a SonarQube null-pointer finding. No behavior change.
+- update jeap-messaging from 18.8.0 to 18.9.0
+- update jeap-crypto from 10.25.0 to 10.26.0
+- update jeap-spring-boot-vault-starter from 24.27.0 to 24.28.0
 
 ## [20.25.0] - 2026-09-03
 
