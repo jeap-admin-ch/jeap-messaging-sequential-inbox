@@ -28,6 +28,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `ch.admin.bit.jeap.security.resource.introspection`. Note that Caffeine on the classpath makes Spring Boot's cache
   auto-configuration select Caffeine for applications using `@EnableCaching` without an explicit `spring.cache.type`
   advising otherwise.
+- update jeap-messaging from 18.11.0 to 18.12.0
+- update jeap-crypto from 10.28.0 to 10.29.0
+- update jeap-spring-boot-vault-starter from 24.30.0 to 24.31.0
 
 ## [20.27.1] - 2026-09-08
 ### Changed
