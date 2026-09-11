@@ -11,6 +11,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Default the AWS Advanced JDBC Wrapper dialect to `aurora-pg`, avoiding database-dialect auto-detection for Aurora
   PostgreSQL. Applications using standard RDS PostgreSQL must override
   `jeap.datasource.aws.wrapper.target-data-source-properties.wrapperDialect=rds-pg`.
+- update jeap-messaging from 18.14.0 to 19.0.0
+- update jeap-crypto from 10.31.0 to 11.0.0
+- update jeap-spring-boot-vault-starter from 24.33.0 to 25.0.0
 
 ## [20.30.0] - 2026-09-10
 
