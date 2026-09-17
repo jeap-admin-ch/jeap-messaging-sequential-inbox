@@ -105,6 +105,23 @@ CREATE TABLE shedlock
 If a `shedlock` table already exists (e.g. because `@IdempotentMessageHandler` is also used), do not
 add it a second time.
 
+### Required schema upgrade for recording provenance (22.0.0)
+
+Apply all incremental migrations in the reference migration directory in addition to the initial
+schema above. In particular, version 22.0.0 requires:
+
+```sql
+ALTER TABLE sequence_instance
+    ADD COLUMN created_in_recording_mode boolean NOT NULL DEFAULT false;
+```
+
+The library does not apply this migration automatically. Deploy it before the new binary.
+Existing rows default to `false`, preserving their normal EHS behavior. The migration cannot infer
+which historical instances were created by an older binary during recording: if such instances
+must be classified, the service team must explicitly backfill only the known sequence names and
+creation intervals. Do not indiscriminately mark existing open instances as recording-created.
+Finish upgrading all replicas before starting a new recording rollout.
+
 ## 3. Declare the sequences
 
 Create `src/main/resources/messaging/jeap-sequential-inbox.yml`. Each sequence lists the message

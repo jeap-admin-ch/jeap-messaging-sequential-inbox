@@ -130,7 +130,8 @@ class SequentialInboxControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(result -> log.debug("{}", result.getResponse().getContentAsString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].name", is("expired")));
+                .andExpect(jsonPath("$.content[0].name", is("expired")))
+                .andExpect(jsonPath("$.content[0].createdInRecordingMode").doesNotExist());
     }
 
     @Test

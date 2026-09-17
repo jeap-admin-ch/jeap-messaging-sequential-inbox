@@ -219,8 +219,11 @@ first.
 
 ## Recording mode (migrating a live topic)
 
-Setting `jeap.messaging.sequential-inbox.sequencing-start-timestamp` enables recording mode until
-the configured timestamp. This allows introducing a sequence on a topic where predecessor messages
+Setting `sequencingStartTimestamp` on a sequence in the YAML descriptor enables recording mode for
+that sequence until the configured local timestamp. Existing sequences without the setting keep
+enforcing their release conditions. The global `jeap.messaging.sequential-inbox.sequencing-start-timestamp`
+still enables recording for all sequences: recording is active if **either** timestamp is in the future.
+This allows introducing a sequence on a topic where predecessor messages
 were already emitted before the inbox existed, without the risk of buffering successors whose
 predecessors were never recorded.
 
@@ -228,18 +231,28 @@ predecessors were never recorded.
 
 - Messages are passed directly to the handler and persisted as `PROCESSED` — they are **not**
   buffered, regardless of release conditions.
-- Sequence instances are created and immediately set to `COMPLETED`.
+- Sequence instances are created `OPEN` with persistent `created_in_recording_mode=true`.
+  They close only when all configured message types have been processed.
 - The inbox acts as a recorder: predecessors accumulate in the database while normal processing
   continues uninterrupted.
 
 **Two-phase rollout:**
 
-1. **Recording phase** (before `sequencing-start-timestamp`): deploy the inbox with the timestamp
+1. **Recording phase** (before `sequencingStartTimestamp`): deploy the inbox with the sequence timestamp
    set. Predecessor messages are recorded as processed while all messages are still handled
    immediately, so no sequence is blocked.
-2. **Active phase** (after `sequencing-start-timestamp`): the inbox switches to full sequencing.
+2. **Active phase** (at or after `sequencingStartTimestamp`, with no active global recording): the inbox switches to full sequencing.
    Because predecessors were already recorded, successors can satisfy their release conditions
-   immediately and are not blocked waiting for predecessors that predate the inbox.
+   immediately. Choose a recording period long enough for in-flight business processes; predecessors
+   processed before recording began cannot be reconstructed by the inbox.
+
+An instance keeps its creation flag after activation and across restarts. If it remains incomplete
+and expires, housekeeping deletes it after the usual delay without forwarding its waiting messages
+to EHS. This also covers messages buffered after activation in an instance created during recording.
+Handler failures continue to use normal error handling; only expiry forwarding is suppressed.
+
+Apply the required database migration before upgrading the application, and finish the rolling
+deployment before enabling recording. Old binaries do not persist the creation flag.
 
 ## Related
 

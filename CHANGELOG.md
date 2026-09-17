@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.0.0] - 2026-09-17
+
+### Added
+- JEAP-6955: Optional per-sequence `sequencingStartTimestamp`; recording is enabled by either the global or sequence-local future timestamp.
+
+### Fixed
+- Housekeeping removes expired instances created in recording mode without forwarding waiting messages to EHS, including messages buffered after recording ends.
+
+### Breaking Changes
+- Applications must add `created_in_recording_mode boolean NOT NULL DEFAULT false` to `sequence_instance` before upgrading. See [reference migration](jeap-messaging-sequential-inbox-test/src/test/resources/db/migration/V7__add-created-in-recording-mode-to-sequence-instance.sql) and [migration guidance](docs/getting-started.md). Finish upgrading all replicas before enabling recording.
+
 ## [21.5.0] - 2026-09-17
 
 ### Changed

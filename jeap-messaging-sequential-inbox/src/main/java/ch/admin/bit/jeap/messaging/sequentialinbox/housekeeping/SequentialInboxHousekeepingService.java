@@ -144,7 +144,11 @@ public class SequentialInboxHousekeepingService {
     private boolean deleteSequenceReadyForRemoval(SequenceInstance sequenceInstance) {
         try {
             return transactions.callInNewTransaction(() -> {
-                sendSequenceInstanceMessagesToErrorHandlingService(sequenceInstance);
+                if (sequenceInstance.isCreatedInRecordingMode()) {
+                    log.info("Deleting recording-created sequence instance {} without forwarding to error handling", sequenceInstance.getId());
+                } else {
+                    sendSequenceInstanceMessagesToErrorHandlingService(sequenceInstance);
+                }
                 return deleteSequenceInstance(sequenceInstance);
             });
         } catch (Exception e) {

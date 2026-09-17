@@ -4,6 +4,8 @@ import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstance;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstancePendingAction;
 import ch.admin.bit.jeap.messaging.sequentialinbox.persistence.SequenceInstanceState;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
@@ -54,6 +56,27 @@ class SequenceInstanceRepositoryTest {
         this.testEntityManager = testEntityManager;
         this.sequenceInstanceRepository = sequenceInstanceRepository;
         this.jpaSequenceInstanceRepository = jpaSequenceInstanceRepository;
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void recordingProvenanceSurvivesJdbcInsertAndJpaReload(boolean recording) {
+        var instance = SequenceInstance.builder().name("recording").contextId(UUID.randomUUID().toString())
+                .retentionPeriod(Duration.ofHours(1)).createdInRecordingMode(recording).build();
+        long id = sequenceInstanceRepository.saveNewInstance(instance);
+        testEntityManager.clear();
+        assertThat(sequenceInstanceRepository.findById(id).orElseThrow().isCreatedInRecordingMode()).isEqualTo(recording);
+    }
+
+    @Test
+    void legacyInsertDefaultsToNormalSequencing() {
+        var entityManager = testEntityManager.getEntityManager();
+        entityManager.createNativeQuery("""
+                INSERT INTO sequence_instance (id, name, context_id, state, created_at, retain_until)
+                VALUES (nextval('sequence_instance_sequence'), 'legacy', 'legacy', 'OPEN', NOW(), NOW())
+                """).executeUpdate();
+        assertThat(sequenceInstanceRepository.findByNameAndContextId("legacy", "legacy").orElseThrow()
+                .isCreatedInRecordingMode()).isFalse();
     }
 
     @Test

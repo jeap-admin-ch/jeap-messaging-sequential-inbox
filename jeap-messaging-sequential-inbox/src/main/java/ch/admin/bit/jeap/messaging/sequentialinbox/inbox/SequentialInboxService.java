@@ -65,12 +65,10 @@ public class SequentialInboxService {
         Sequence sequence = inboxConfiguration.getSequenceByQualifiedSequencedMessageTypeName(qualifiedSequencedMessageTypeName);
         log.info("Handling message {} ({}) in sequence {} with context ID {}",
                 qualifiedSequencedMessageTypeName, avroMessage.getIdentity().getId(), sequence.getName(), contextId);
-        long sequenceInstanceId = sequenceInstanceFactory.createOrGetSequenceInstance(sequence, contextId);
-
-        // If the sequencing start timestamp is set and the current time is before the start timestamp, start the record mode and handle the message immediately.
-        // The record activates sequencing with a delay. Until activation, the predecessor messages are recorded (Recording Mode).
-        // This is needed to handle messages that need to be newly sequenced, but their predecessor was received before the introduction of the sequence.
-        boolean recordingModeIsEnabled = sequencingStartTimestamp != null && LocalDateTime.now(ZoneId.systemDefault()).isBefore(sequencingStartTimestamp);
+        // Evaluate once: creation provenance and message processing must use the same decision.
+        // The global switch still records all sequences; a local switch additionally records just this sequence.
+        boolean recordingModeIsEnabled = isRecordingModeEnabled(sequence, LocalDateTime.now(ZoneId.systemDefault()));
+        long sequenceInstanceId = sequenceInstanceFactory.createOrGetSequenceInstance(sequence, contextId, recordingModeIsEnabled);
 
         // Atomically claim the idempotence ID before checking and processing the message. A concurrent insert for the
         // same qualified message type and idempotence ID waits for this transaction. It can only proceed if this
@@ -109,6 +107,11 @@ public class SequentialInboxService {
 
         // Acknowledge the current record
         acknowledgment.acknowledge();
+    }
+
+    boolean isRecordingModeEnabled(Sequence sequence, LocalDateTime now) {
+        return (sequencingStartTimestamp != null && now.isBefore(sequencingStartTimestamp))
+                || (sequence.getSequencingStartTimestamp() != null && now.isBefore(sequence.getSequencingStartTimestamp()));
     }
 
     @Timed(value = "jeap.messaging.sequential-inbox.handle-message-with-pending-action", percentiles = {0.5, 0.8, 0.95, 0.99})

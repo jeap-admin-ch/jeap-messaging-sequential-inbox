@@ -25,6 +25,7 @@ Start with [Getting started](docs/getting-started.md), then follow the links bel
 |--------------------------------------------------------------|----------------------------------------------------------------------------|
 | Getting started (add the dependency, declare a sequence)     | [docs/getting-started.md](docs/getting-started.md)                         |
 | How sequencing works (buffering & release flow)              | [docs/how-it-works.md](docs/how-it-works.md)                               |
+| Selective recording when introducing a sequence on live topics | [Recording rollout](docs/how-it-works.md#recording-mode-migrating-a-live-topic) |
 | Sequence declaration reference (`jeap-sequential-inbox.yml`) | [docs/sequence-declaration.md](docs/sequence-declaration.md)               |
 | Configuration reference (`jeap.messaging.sequential-inbox.*`)| [docs/configuration.md](docs/configuration.md)                             |
 | Housekeeping, retention & metrics                            | [docs/housekeeping-and-metrics.md](docs/housekeeping-and-metrics.md)       |

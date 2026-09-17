@@ -73,7 +73,7 @@ class SequentialInboxServiceTest {
         when(inboxConfiguration.getSequenceByQualifiedSequencedMessageTypeName("qualified-message-type"))
                 .thenReturn(sequence);
         when(sequence.getName()).thenReturn("sequence-name");
-        when(sequenceInstanceFactory.createOrGetSequenceInstance(sequence, "context-id")).thenReturn(42L);
+        when(sequenceInstanceFactory.createOrGetSequenceInstance(sequence, "context-id", false)).thenReturn(42L);
         when(sequencedMessageService.createIdempotenceClaim(
                 "qualified-message-type", "idempotence-id", 42L)).thenReturn(false);
         when(sequenceInstanceFactory.getExistingSequenceInstanceAndLockForUpdate(42L)).thenReturn(sequenceInstance);

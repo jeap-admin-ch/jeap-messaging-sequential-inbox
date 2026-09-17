@@ -1,5 +1,6 @@
 package ch.admin.bit.jeap.messaging.sequentialinbox.persistence;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,6 +40,11 @@ public class SequenceInstance {
     @Column(name = "retain_until", nullable = false)
     private ZonedDateTime retainUntil; // depends on the business process
 
+    // Creation provenance, not the current recording mode. Never changed when the timestamp elapses.
+    @JsonIgnore
+    @Column(name = "created_in_recording_mode", nullable = false, updatable = false)
+    private boolean createdInRecordingMode;
+
     @Setter
     @Column(name = "remove_after")
     private ZonedDateTime removeAfter; // depends on the DevOps process
@@ -49,13 +55,14 @@ public class SequenceInstance {
     private SequenceInstancePendingAction pendingAction;
 
     @Builder
-    private SequenceInstance(@NonNull String name, @NonNull String contextId, SequenceInstanceState state, @NonNull Duration retentionPeriod) {
+    private SequenceInstance(@NonNull String name, @NonNull String contextId, SequenceInstanceState state, @NonNull Duration retentionPeriod, boolean createdInRecordingMode) {
         this.name = name;
         this.contextId = contextId;
         this.state = state == null ? SequenceInstanceState.OPEN : state;
         this.createdAt = ZonedDateTime.now();
         this.retainUntil = this.createdAt.plus(retentionPeriod);
         this.removeAfter = null;
+        this.createdInRecordingMode = createdInRecordingMode;
     }
 
     public void close() {

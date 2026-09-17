@@ -30,6 +30,10 @@ jeap:
 
 ## Core
 
+The global `sequencing-start-timestamp` retains its all-sequences behavior. To introduce only one
+new sequence, leave the global setting unset and use `sequencingStartTimestamp` in that sequence's
+YAML declaration. Recording is active when either timestamp is in the future (logical OR).
+
 | Name                                        | Default                                          | Description                                                                                                                                                         |
 |---------------------------------------------|--------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `enabled`                                   | `true`                                           | Enable the Sequential Inbox auto-configuration                                                                                                                      |

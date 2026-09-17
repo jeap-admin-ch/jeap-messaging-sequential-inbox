@@ -32,13 +32,13 @@ class SequenceInstanceFactory {
         return repository.getByIdAndLockForUpdate(sequenceInstanceId, idleLockTimeoutSeconds);
     }
 
-    long createOrGetSequenceInstance(Sequence sequence, String contextId) {
+    long createOrGetSequenceInstance(Sequence sequence, String contextId, boolean recordingMode) {
         try {
             return tx.callInNewTransaction(() -> {
                 // First, attempt to find an existing instance
                 Optional<Long> existingInstance = repository.findIdByNameAndContextId(sequence.getName(), contextId);
                 // Return the existing instance if found, otherwise create a new one
-                return existingInstance.orElseGet(() -> saveNewInstance(sequence, contextId));
+                return existingInstance.orElseGet(() -> saveNewInstance(sequence, contextId, recordingMode));
             });
         } catch (DataIntegrityViolationException e) {
             // If another thread inserted the same contextId concurrently, find and return it
@@ -49,11 +49,12 @@ class SequenceInstanceFactory {
         }
     }
 
-    private long saveNewInstance(Sequence sequence, String contextId) {
+    private long saveNewInstance(Sequence sequence, String contextId, boolean recordingMode) {
         SequenceInstance newInstance = SequenceInstance.builder()
                 .contextId(contextId)
                 .name(sequence.getName())
                 .retentionPeriod(sequence.getRetentionPeriod())
+                .createdInRecordingMode(recordingMode)
                 .build();
         return repository.saveNewInstance(newInstance);
     }

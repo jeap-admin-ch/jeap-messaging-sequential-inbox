@@ -72,6 +72,14 @@ classDiagram
 
 ## Sequence
 
+The optional `sequencingStartTimestamp` is an ISO local date-time, e.g.
+`sequencingStartTimestamp: '2026-10-01T08:00:00'`. Before this timestamp the sequence records
+messages without enforcing release conditions. Other sequences remain active unless the global
+`jeap.messaging.sequential-inbox.sequencing-start-timestamp` also enables recording. Either future
+timestamp enables recording; an elapsed sequence timestamp does not override the global switch.
+At or after both timestamps, normal sequencing applies. All service instances must use the same
+timezone and configuration. See [recording rollout](how-it-works.md#recording-mode-migrating-a-live-topic).
+
 | Attribute         | Cardinality | Description                                                                                     | Example         |
 |-------------------|-------------|-------------------------------------------------------------------------------------------------|-----------------|
 | `name`            | Required    | Name of the sequence (used in logs, the REST API and the sequence instance rows)                | `OrderSequence` |

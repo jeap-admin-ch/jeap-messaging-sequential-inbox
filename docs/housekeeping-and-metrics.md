@@ -22,6 +22,13 @@ The jobs use ShedLock so only one instance runs them at a time. See
 > period expired. Messages were not forwarded to the error-handling service. The `delay`-based
 > deferred removal and forwarding behaviour described above was introduced in version 10.0.0.
 
+## Recording-created instances
+
+Instances created during recording mode retain `created_in_recording_mode=true`, even after
+sequencing activates or the timestamp is removed. On delayed removal, their remaining messages
+are deleted without EHS forwarding. Normal instances still forward waiting messages to EHS.
+The same retention, delay, batch limits, deletion counters and child-row cleanup apply to both.
+
 ## Metrics
 
 The library registers Micrometer meters, recomputed every `metrics.update-rate-minutes` (default 5).

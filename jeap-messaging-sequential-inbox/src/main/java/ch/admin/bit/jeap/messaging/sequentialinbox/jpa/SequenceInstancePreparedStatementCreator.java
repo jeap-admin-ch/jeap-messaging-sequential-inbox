@@ -22,12 +22,12 @@ import java.time.ZonedDateTime;
  * Hibernate for creating the sequence instance.
  */
 record SequenceInstancePreparedStatementCreator(String name, String contextId, String state,
-                                                ZonedDateTime createdAt, ZonedDateTime retainUntil)
+                                                ZonedDateTime createdAt, ZonedDateTime retainUntil, boolean createdInRecordingMode)
         implements PreparedStatementCreator, SqlProvider, ResultSetExtractor<Long> {
 
     private static final String SQL = """
-            INSERT INTO sequence_instance (id, name, context_id, state, created_at, retain_until)
-            VALUES (nextval('sequence_instance_sequence'), ?, ?, ?, ?, ?) RETURNING id
+            INSERT INTO sequence_instance (id, name, context_id, state, created_at, retain_until, created_in_recording_mode)
+            VALUES (nextval('sequence_instance_sequence'), ?, ?, ?, ?, ?, ?) RETURNING id
             """;
 
     @Override
@@ -38,6 +38,7 @@ record SequenceInstancePreparedStatementCreator(String name, String contextId, S
         ps.setString(3, state);
         ps.setObject(4, createdAt.toOffsetDateTime());
         ps.setObject(5, retainUntil.toOffsetDateTime());
+        ps.setBoolean(6, createdInRecordingMode);
         return ps;
     }
 

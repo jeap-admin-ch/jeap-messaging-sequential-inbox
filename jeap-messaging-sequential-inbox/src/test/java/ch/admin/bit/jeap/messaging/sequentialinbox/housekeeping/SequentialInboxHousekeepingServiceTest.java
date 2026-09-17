@@ -175,6 +175,23 @@ class SequentialInboxHousekeepingServiceTest {
         verify(metricsCollector).onSequenceInstanceDeletedByHousekeeping(SequenceInstanceState.OPEN.name(), 3);
     }
 
+    @Test
+    void deletesRecordingCreatedInstanceWithoutErrorHandling() {
+        SequenceInstance instance = mockSequenceInstance(45L);
+        when(instance.isCreatedInRecordingMode()).thenReturn(true);
+        when(sequenceInstanceRepository.findInstancesForRemovalOldestFirst(anyInt()))
+                .thenReturn(List.of(instance)).thenReturn(List.of());
+        when(sequenceInstanceRepository.deleteNotClosedById(45L)).thenReturn(1);
+
+        housekeepingService.deleteSequencesReadyForRemoval();
+
+        verifyNoInteractions(errorHandlingService);
+        verify(messageRepository, never()).getWaitingMessagesInNewTransaction(45L);
+        verify(messageRepository).deleteNotClosedSequenceInstanceMessages(45L);
+        verify(sequenceInstanceRepository).deleteNotClosedById(45L);
+        verify(metricsCollector).onSequenceInstanceDeletedByHousekeeping(SequenceInstanceState.OPEN.name(), 1);
+    }
+
     private SequenceInstance mockSequenceInstance(long id) {
         SequenceInstance instance = mock(SequenceInstance.class);
         when(instance.getId()).thenReturn(id);

@@ -31,12 +31,12 @@ public class SequenceInstanceRepository {
     @Transactional
     public long saveNewInstance(SequenceInstance sequenceInstance) {
         return insertInstance(sequenceInstance.getName(), sequenceInstance.getContextId(), sequenceInstance.getState().name(),
-                sequenceInstance.getCreatedAt(), sequenceInstance.getRetainUntil());
+                sequenceInstance.getCreatedAt(), sequenceInstance.getRetainUntil(), sequenceInstance.isCreatedInRecordingMode());
     }
 
     @SuppressWarnings("java:S2259")
-    private long insertInstance(String name, String contextId, String state, ZonedDateTime createdAt, ZonedDateTime retainUntil) {
-        SequenceInstancePreparedStatementCreator psc = new SequenceInstancePreparedStatementCreator(name, contextId, state, createdAt, retainUntil);
+    private long insertInstance(String name, String contextId, String state, ZonedDateTime createdAt, ZonedDateTime retainUntil, boolean createdInRecordingMode) {
+        SequenceInstancePreparedStatementCreator psc = new SequenceInstancePreparedStatementCreator(name, contextId, state, createdAt, retainUntil, createdInRecordingMode);
         //noinspection DataFlowIssue
         return jdbcTemplate.query(psc, psc);
     }

@@ -13,7 +13,8 @@ CREATE TABLE sequence_instance
     closed_at      timestamp with time zone,
     retain_until   timestamp with time zone NOT NULL,
     remove_after   timestamp with time zone,
-    pending_action text
+    pending_action text,
+    created_in_recording_mode boolean NOT NULL DEFAULT false
 );
 
 ALTER TABLE sequence_instance

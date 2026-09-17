@@ -3,6 +3,7 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model;
 import lombok.Getter;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -14,6 +15,8 @@ public class Sequence {
     private String name;
 
     private Duration retentionPeriod;
+
+    private LocalDateTime sequencingStartTimestamp;
 
     private List<SequencedMessageType> messages;
 

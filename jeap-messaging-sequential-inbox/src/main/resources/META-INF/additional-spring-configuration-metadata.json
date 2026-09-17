@@ -56,7 +56,7 @@
     },
     {
       "name": "jeap.messaging.sequential-inbox.sequencing-start-timestamp",
-      "description": "Timestamp from which the sequencing should effectively start. Once this parameter is configured, the recording mode will be activated.",
+      "description": "Global local timestamp until which all sequences record instead of enforcing release conditions. A future sequencingStartTimestamp on an individual sequence additionally enables recording for that sequence. Recording is active if either timestamp is in the future.",
       "type": "java.time.LocalDateTime"
     },
     {
