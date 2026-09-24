@@ -17,6 +17,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Preserve the original database failure when failover retry backoff is interrupted, attaching the interruption
   as a suppressed exception and retaining the thread's interrupt flag.
 - Use the transaction context stack instead of a redundant nesting-depth counter.
+- update jeap-messaging from 19.7.0 to 19.8.0
+- update jeap-crypto from 11.9.0 to 11.10.0
+- update jeap-spring-boot-vault-starter from 25.9.0 to 25.10.0
 
 ## [22.2.0] - 2026-09-22
 
