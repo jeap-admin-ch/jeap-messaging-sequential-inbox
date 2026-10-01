@@ -46,6 +46,12 @@ class SequentialInboxConfigurationValidationTest {
             "missing-subtype-resolver.yml;Missing subtype resolver for message type which has a subtype defined: MyEventType1",
             "different-topics-for-subtypes.yml;Different topics configured for subtypes of message type MyEventType1: [topic-1, topic-2]",
             "different-topics-for-subtype-with-default.yml;Different topics configured for subtypes of message type MyEventType1: [<default message type topic>, topic-1]",
+            "different-topics-for-subtypes-multi.yml;Different topics configured for subtypes of message type MyEventType1: [[topic-1, topic-1-v2], topic-1]",
+            "topic-and-topics.yml;Both the topic and the topics attribute are configured for message type MyEventType1. Use either topic for a single topic or topics for multiple topics.",
+            "duplicated-topic-in-topics.yml;Duplicated topics: [topic-1]",
+            "topic-of-other-message-type.yml;Duplicated topics: [topic-1-v2]",
+            "empty-topic-name.yml;Empty topic name configured for message type MyEventType1",
+            "missing-topic-name.yml;Empty topic name configured for message type MyEventType1",
             "subtype-resolver-for-existent-type.yml;Subtype resolver for message type that is either not sequenced or has not subtypes defined: DoesNotExistEvent",
             "subtype-resolver-for-type-without-subtype.yml;Subtype resolver for message type that is either not sequenced or has not subtypes defined: MyEventType1",
             "mixed-type-and-subtype.yml;Mix of configuration of messages type with and without subtype: [MyEventType1, MyEventType2]"

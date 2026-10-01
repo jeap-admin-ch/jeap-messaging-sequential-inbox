@@ -88,23 +88,41 @@ class ConfigurationValidator {
     }
 
     private void validateAllSubtypesHaveSameTopicConfigured() {
+        sequences.stream()
+                .flatMap(s -> s.getMessages().stream())
+                .forEach(ConfigurationValidator::validateTopicAttributes);
+
         Map<String, Set<String>> topicsByJeapMessageType = sequences.stream()
                 .flatMap(s -> s.getMessages().stream())
                 .filter(s -> s.getJeapMessageTypeName() != null)
                 .collect(groupingBy(
                         SequencedMessageType::getJeapMessageTypeName,
-                        mapping(this::topicNameOrDefaultTopic, toSet())));
+                        mapping(this::topicNamesOrDefaultTopic, toCollection(TreeSet::new))));
         topicsByJeapMessageType.forEach((messageType, topics) -> {
             if (topics.size() > 1) {
                 throw SequentialInboxConfigurationException.inconsistentTopicNames(messageType, topics);
             }
         });
 
+        validateEachTopicIsConsumedForOneMessageTypeOnly();
+    }
+
+    /**
+     * A topic can be consumed for one message type only, as the sequential inbox starts one consumer per
+     * message type and topic.
+     */
+    private void validateEachTopicIsConsumedForOneMessageTypeOnly() {
+        Map<String, Set<String>> distinctTopicsByJeapMessageType = sequences.stream()
+                .flatMap(s -> s.getMessages().stream())
+                .filter(s -> s.getJeapMessageTypeName() != null)
+                .collect(groupingBy(
+                        SequencedMessageType::getJeapMessageTypeName,
+                        flatMapping(smt -> smt.getTopics().stream(), toSet())));
+
         Set<String> topics = new HashSet<>();
-        Set<String> duplicatedTopics = new HashSet<>();
-        topicsByJeapMessageType.values().stream()
+        Set<String> duplicatedTopics = new TreeSet<>();
+        distinctTopicsByJeapMessageType.values().stream()
                 .flatMap(Set::stream)
-                .filter(topic -> !DEFAULT_MESSAGE_TYPE_TOPIC.equals(topic))
                 .forEach(topic -> {
                     if (!topics.add(topic)) {
                         duplicatedTopics.add(topic);
@@ -116,8 +134,38 @@ class ConfigurationValidator {
         }
     }
 
-    private String topicNameOrDefaultTopic(SequencedMessageType smt) {
-        return smt.getTopic() == null ? DEFAULT_MESSAGE_TYPE_TOPIC : smt.getTopic();
+    private static void validateTopicAttributes(SequencedMessageType smt) {
+        List<String> declaredTopics = smt.getDeclaredTopics();
+        if (smt.getTopic() != null && !declaredTopics.isEmpty()) {
+            throw SequentialInboxConfigurationException.topicAndTopicsConfigured(smt.getQualifiedName());
+        }
+        if (smt.getTopic() != null && !hasText(smt.getTopic())) {
+            throw SequentialInboxConfigurationException.invalidTopicName(smt.getQualifiedName());
+        }
+        if (declaredTopics.stream().anyMatch(topic -> !hasText(topic))) {
+            throw SequentialInboxConfigurationException.invalidTopicName(smt.getQualifiedName());
+        }
+        Set<String> duplicatedTopics = declaredTopics.stream()
+                .filter(topic -> Collections.frequency(declaredTopics, topic) > 1)
+                .collect(toCollection(TreeSet::new));
+        if (!duplicatedTopics.isEmpty()) {
+            throw SequentialInboxConfigurationException.duplicatedTopics(duplicatedTopics);
+        }
+    }
+
+    /**
+     * @return The topic names configured for the given message type as a single string, or a placeholder if the
+     * message type is consumed from its default topic
+     */
+    private String topicNamesOrDefaultTopic(SequencedMessageType smt) {
+        List<String> configuredTopics = smt.getTopics();
+        if (configuredTopics.isEmpty()) {
+            return DEFAULT_MESSAGE_TYPE_TOPIC;
+        }
+        if (configuredTopics.size() == 1) {
+            return configuredTopics.getFirst();
+        }
+        return configuredTopics.stream().sorted().collect(joining(", ", "[", "]"));
     }
 
     private void validateSubtypes() {

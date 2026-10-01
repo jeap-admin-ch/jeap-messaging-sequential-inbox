@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.8.0] - 2026-10-02
+
+### Added
+- Support for consuming the same message type from several Kafka topics: declare `topics` instead of `topic`
+  in the sequence declaration to let the sequential inbox start one consumer per topic. This makes it possible
+  to consume from the old and the new topic at the same time during a topic migration.
+
 ## [22.7.0] - 2026-10-01
 
 ### Changed

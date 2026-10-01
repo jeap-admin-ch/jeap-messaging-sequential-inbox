@@ -48,6 +48,8 @@ class SequentialInboxConfigurationLoaderTest {
         assertThat(smt.getClusterName()).isEqualTo("test-cluster");
         assertThat(smt.getContextIdExtractor()).isInstanceOf(TestContextIdExtractor.class);
         assertThat(smt.getMessageFilter()).isNull();
+        assertThat(smt.getTopic()).isEqualTo("test-topic-98");
+        assertThat(smt.getTopics()).containsExactly("test-topic-98");
         Sequence seq = sequentialInboxConfiguration.getSequenceByQualifiedSequencedMessageTypeName("MyEventType98");
         assertThat(seq.getMessages().get(1).getMessageFilter())
                 .isInstanceOf(TestMessageFilter.class);
@@ -58,5 +60,19 @@ class SequentialInboxConfigurationLoaderTest {
         assertThat(sequentialInboxConfiguration.getSequenceByName("eventType2AfterEventType1")).isNotNull();
         assertThat(sequentialInboxConfiguration.getSequenceByName("eventType99AfterEventType98")).isNotNull();
         assertThat(sequentialInboxConfiguration.getSequenceByName("fooBar")).isEmpty();
+    }
+
+    @Test
+    void load_whenMultipleTopicsConfiguredForMessageType_thenAllTopicsLoaded() {
+        SequentialInboxConfigurationLoader loader = new SequentialInboxConfigurationLoader(
+                "classpath:/configurations/valid/multiple-topics.yml");
+        SequentialInboxConfiguration sequentialInboxConfiguration = loader.loadSequenceDeclaration();
+
+        SequencedMessageType multiTopicMessageType = sequentialInboxConfiguration.requireSequencedMessageTypeByQualifiedName("MyEventType1.BANANAS");
+        assertThat(multiTopicMessageType.getTopic()).isNull();
+        assertThat(multiTopicMessageType.getTopics()).containsExactly("topic-1", "topic-1-v2");
+
+        SequencedMessageType singleTopicMessageType = sequentialInboxConfiguration.requireSequencedMessageTypeByQualifiedName("MyEventType2");
+        assertThat(singleTopicMessageType.getTopics()).containsExactly("topic-2");
     }
 }

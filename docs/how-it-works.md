@@ -254,6 +254,15 @@ Handler failures continue to use normal error handling; only expiry forwarding i
 Apply the required database migration before upgrading the application, and finish the rolling
 deployment before enabling recording. Old binaries do not persist the creation flag.
 
+## Consuming a message type from several topics
+
+A message type can be consumed from more than one topic by declaring `topics` instead of `topic` in
+the sequence declaration. The inbox then starts one consumer per topic, all feeding the same
+sequence. This is what makes a topic migration (e.g. `my-topic` → `my-topic-v2`) possible without an
+interruption: the consumer reads from the old and the new topic at the same time, and a message
+delivered on both topics is still processed only once. See
+[Consuming a message type from several topics](sequence-declaration.md#consuming-a-message-type-from-several-topics).
+
 ## Related
 
 - [Getting started](getting-started.md)

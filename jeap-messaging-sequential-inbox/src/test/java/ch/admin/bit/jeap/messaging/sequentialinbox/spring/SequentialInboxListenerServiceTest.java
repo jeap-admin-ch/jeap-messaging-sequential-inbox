@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Objects;
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -45,7 +46,7 @@ class SequentialInboxListenerServiceTest {
         sequentialInboxListenerService.startMessageListeners();
 
         verify(messageConsumerFactory, times(1))
-                .startConsumer(eq("topic"), eq("AvroMessage"), eq("clusterName"), any());
+                .startConsumer(eq(List.of("topic")), eq("AvroMessage"), eq("clusterName"), any());
     }
 
     @Test
@@ -56,7 +57,7 @@ class SequentialInboxListenerServiceTest {
         sequentialInboxListenerService.startMessageListeners();
 
         verify(messageConsumerFactory, times(1))
-                .startConsumer(eq("topic"), eq("AvroMessage"), eq("clusterName"), any());
+                .startConsumer(eq(List.of("topic")), eq("AvroMessage"), eq("clusterName"), any());
     }
 
     @Test
@@ -107,6 +108,21 @@ class SequentialInboxListenerServiceTest {
         assertThatExceptionOfType(SequentialInboxException.class)
                 .isThrownBy(() -> sequentialInboxListenerService.startMessageListeners())
                 .withMessageContaining("invalid signature");
+    }
+
+    @Test
+    void startMessageListeners_withMultipleTopicsConfiguredForMessageType() {
+        ValidListener bean = new ValidListener();
+        SequencedMessageType messageType = SequencedMessageType.builder()
+                .type("AvroMessage").topics(List.of("topic", "topic-v2")).clusterName("clusterName").build();
+        when(sequentialInboxConfiguration.getSequencedMessageTypes()).thenReturn(Set.of(messageType));
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"beanName"});
+        when(applicationContext.getBean("beanName")).thenReturn(bean);
+
+        sequentialInboxListenerService.startMessageListeners();
+
+        verify(messageConsumerFactory, times(1))
+                .startConsumer(eq(List.of("topic", "topic-v2")), eq("AvroMessage"), eq("clusterName"), any());
     }
 
     private void mockListener(Object bean) {

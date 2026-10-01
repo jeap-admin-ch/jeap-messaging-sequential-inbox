@@ -21,6 +21,7 @@ classDiagram
         messageType
         [subType]
         [topic]
+        [topics]
         [clusterName]
     }
 
@@ -93,10 +94,66 @@ timezone and configuration. See [recording rollout](how-it-works.md#recording-mo
 | `type`               | Required    | The jEAP message type name (the Avro message simple class name)                                                                                             | `JmeOrderCreatedEvent`                         |
 | `subType`            | Optional    | Subtype for fine-grained sequencing of a generic message type. Resolved by a `SubTypeResolver`; must be a value of the resolver's Java `Enum`               | `STOCK_AVAILABLE`                              |
 | `topic`              | Optional    | Topic to consume the message from, if different from the default                                                                                            | `my-topic`                                     |
-| `clusterName`        | Optional    | Kafka cluster of the topic, if different from the default cluster                                                                                           | `aws`                                          |
+| `topics`             | Optional    | List of topics to consume the message from, see [Consuming a message type from several topics](#consuming-a-message-type-from-several-topics). Mutually exclusive with `topic`  | `[my-topic, my-topic-v2]`   |
+| `clusterName`        | Optional    | Kafka cluster of the topic(s), if different from the default cluster                                                                                         | `aws`                                          |
 | `contextIdExtractor` | Required    | Fully-qualified class name implementing `ContextIdExtractor`; returns the `contextId` grouping messages into one instance (`null` = not sequenceable)       | `ch.admin.bit.example.OrderIdExtractor`        |
 | `messageFilter`      | Optional    | Fully-qualified class name implementing `MessageFilter`; `shouldSequence` returning `false` means the message bypasses the inbox and is handled immediately | `ch.admin.bit.example.OrderCreatedEventFilter` |
 | `releaseCondition`   | Optional    | The predecessor(s) that must be processed before this message is released. No condition means the message can be released as soon as it arrives             |                                                |
+
+## Consuming a message type from several topics
+
+By default a message type is consumed from exactly one topic: `topic`, or the message type's default
+topic if `topic` is not declared. During a topic migration (e.g. from `my-topic` to `my-topic-v2`) a
+consumer has to read the same message type from the old **and** the new topic for a while. Declare
+the topics with `topics` instead of `topic`:
+
+```yaml
+sequences:
+  - name: OrderSequence
+    retentionPeriod: 24h
+    messages:
+      - type: JmeOrderCreatedEvent
+        topics:
+          - my-topic
+          - my-topic-v2
+        contextIdExtractor: ch.admin.bit.example.OrderIdExtractor
+```
+
+The inbox starts one Kafka consumer per declared topic, all of them on the same cluster
+(`clusterName`) and all of them feeding the same sequence. The topic a message was received from is
+irrelevant for sequencing: release conditions, the `contextId` grouping and the message handler are
+the same regardless of the topic. The topic is however recorded per message and used when a buffered
+message is deserialized later or forwarded to the error handling service.
+
+Each declared topic adds a listener container with the configured concurrency, so a second topic
+doubles the number of consumer threads of that message type — and with it the number of database
+connections the inbox may hold concurrently (the inbox holds a connection while a listener runs, see
+[Sequential Inbox idempotence](sequential-inbox-idempotence.md)). Re-check the Hikari pool size and
+`max.poll.interval.ms` (see [Configuration reference](configuration.md)) before enabling a second
+topic.
+
+Rules validated on startup:
+
+- `topic` and `topics` are mutually exclusive on the same message, and topic names must not be empty
+- a topic must not be declared twice for the same message
+- all entries of the same message type (i.e. all its subtypes) must declare the same topics
+- a topic can be consumed for one message type only
+
+Both topics need a consumer contract, as every topic is validated against the contracts of the
+consuming application:
+
+```java
+@JeapMessageConsumerContract(value = JmeOrderCreatedEvent.TypeRef.class,
+        topic = {"my-topic", "my-topic-v2"})
+```
+
+A message that is delivered on both topics — for instance because messages have been copied to the
+new topic — is processed only once: the inbox de-duplicates on message type and idempotence id,
+independently of the topic (see [Sequential Inbox idempotence](sequential-inbox-idempotence.md)).
+
+Once the migration is finished, remove the old topic from `topics` (or replace `topics` with a
+single `topic`). Messages that are still buffered are not affected, as they are replayed from the
+database and not from Kafka.
 
 ## ContextIdExtractor
 

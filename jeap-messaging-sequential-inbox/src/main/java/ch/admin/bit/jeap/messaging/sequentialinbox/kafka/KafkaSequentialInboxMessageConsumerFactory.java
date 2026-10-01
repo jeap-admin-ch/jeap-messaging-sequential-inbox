@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -48,18 +49,25 @@ public class KafkaSequentialInboxMessageConsumerFactory {
         this.errorHandlingTargetFilter = errorHandlingTargetFilter;
     }
 
-    public void startConsumer(String topicName, String messageType, String clusterName, SequentialInboxMessageHandler messageHandler) {
-        if (!StringUtils.hasText(clusterName)) {
-            clusterName = kafkaProperties.getDefaultClusterName();
-        }
-        if (!StringUtils.hasText(topicName)) {
-            topicName = getDefaultTopicForMessageType(messageHandler.getMessageTypeClass());
-        }
-        contractsValidator.ensureConsumerContract(messageType, topicName);
+    /**
+     * Starts one consumer per topic for the given message type. A message type can be consumed from more than one
+     * topic, i.e. while migrating a message type from one topic to another one.
+     *
+     * @param topicNames The topics to consume the message type from, or an empty collection to consume the message
+     *                   type from its default topic
+     */
+    public void startConsumer(Collection<String> topicNames, String messageType, String clusterName, SequentialInboxMessageHandler messageHandler) {
+        String cluster = StringUtils.hasText(clusterName) ? clusterName : kafkaProperties.getDefaultClusterName();
+        Collection<String> topics = (topicNames == null || topicNames.isEmpty()) ?
+                List.of(getDefaultTopicForMessageType(messageHandler.getMessageTypeClass())) : topicNames;
 
-        log.info("Starting sequential inbox message listener for messageType '{}' on topic '{}' on cluster '{}'", messageType, topicName, clusterName);
-        KafkaSequentialInboxMessageListener listener = new KafkaSequentialInboxMessageListener(messageHandler, sequentialInboxService);
-        startConsumer(topicName, clusterName, listener);
+        topics.forEach(topicName -> {
+            contractsValidator.ensureConsumerContract(messageType, topicName);
+
+            log.info("Starting sequential inbox message listener for messageType '{}' on topic '{}' on cluster '{}'", messageType, topicName, cluster);
+            KafkaSequentialInboxMessageListener listener = new KafkaSequentialInboxMessageListener(messageHandler, sequentialInboxService);
+            startConsumer(topicName, cluster, listener);
+        });
     }
 
     private String getDefaultTopicForMessageType(Class<AvroMessage> messageTypeClass) {

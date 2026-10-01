@@ -108,4 +108,12 @@ public class SequentialInboxConfigurationException extends RuntimeException {
     public static SequentialInboxConfigurationException inconsistentTopicNames(String messageType, Set<String> topics) {
         return new SequentialInboxConfigurationException("Different topics configured for subtypes of message type %s: %s".formatted(messageType, topics));
     }
+
+    public static SequentialInboxConfigurationException topicAndTopicsConfigured(String messageType) {
+        return new SequentialInboxConfigurationException("Both the topic and the topics attribute are configured for message type %s. Use either topic for a single topic or topics for multiple topics.".formatted(messageType));
+    }
+
+    public static SequentialInboxConfigurationException invalidTopicName(String messageType) {
+        return new SequentialInboxConfigurationException("Empty topic name configured for message type %s".formatted(messageType));
+    }
 }

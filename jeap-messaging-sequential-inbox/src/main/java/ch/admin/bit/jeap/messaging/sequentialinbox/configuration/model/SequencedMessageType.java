@@ -3,6 +3,7 @@ package ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model;
 import ch.admin.bit.jeap.messaging.avro.AvroMessage;
 import lombok.*;
 
+import java.util.List;
 import java.util.Set;
 
 @AllArgsConstructor // for builder
@@ -15,6 +16,7 @@ public class SequencedMessageType {
     private String subType;
     @Getter
     private String topic;
+    private List<String> topics;
     @Getter
     private String clusterName;
     @Getter
@@ -41,11 +43,34 @@ public class SequencedMessageType {
         return type;
     }
 
+    /**
+     * The topics this message type is consumed from. A message type can be consumed from more than one topic,
+     * i.e. while migrating a message type from one topic to another one.
+     *
+     * @return The configured topics, or an empty list if the default topic of the message type should be used
+     */
+    public List<String> getTopics() {
+        if (topics != null && !topics.isEmpty()) {
+            return List.copyOf(topics);
+        }
+        if (topic != null) {
+            return List.of(topic);
+        }
+        return List.of();
+    }
+
+    /**
+     * @return The topics attribute as declared in the configuration, without any fallback to the topic attribute
+     */
+    List<String> getDeclaredTopics() {
+        return topics == null ? List.of() : topics;
+    }
+
     @Override
     public String toString() {
-        return "SequencedMessageType{type='%s',subType='%s',topic=%s,clusterName=%s,contextIdExtractor=%s,messageFilter=%s,releaseCondition=%s}".formatted(type,
+        return "SequencedMessageType{type='%s',subType='%s',topics=%s,clusterName=%s,contextIdExtractor=%s,messageFilter=%s,releaseCondition=%s}".formatted(type,
                 subType,
-                topic,
+                getTopics(),
                 clusterName,
                 contextIdExtractor.getClass().getName(),
                 messageFilter != null ? messageFilter.getClass().getName() : "null",

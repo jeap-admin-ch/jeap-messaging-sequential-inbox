@@ -1,0 +1,31 @@
+subTypeResolvers:
+  MyEventType1: ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.TestSubTypeResolver
+
+sequences:
+
+  - name: eventType2AfterEventType1
+    retentionPeriod: P2D
+    messages:
+      # the same message type is consumed from two topics, i.e. while migrating the message type to a new topic
+      - type: MyEventType1
+        subType: BANANAS
+        topics:
+          - topic-1
+          - topic-1-v2
+        contextIdExtractor: ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.TestContextIdExtractor
+
+      - type: MyEventType1
+        subType: APPLES
+        topics:
+          - topic-1
+          - topic-1-v2
+        contextIdExtractor: ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.TestContextIdExtractor
+
+      - type: MyEventType2
+        topics:
+          - topic-2
+        contextIdExtractor: ch.admin.bit.jeap.messaging.sequentialinbox.configuration.model.TestContextIdExtractor
+        releaseCondition:
+          and:
+            - predecessor: MyEventType1.BANANAS
+            - predecessor: MyEventType1.APPLES

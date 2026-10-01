@@ -1,0 +1,23 @@
+sequences:
+  - name: MultiTopicSequence
+    retentionPeriod: 24h
+    messages:
+      - type: JmeDeclarationCreatedEvent
+        contextIdExtractor: ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestContextIdExtractor
+        messageFilter: ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestMessageFilter
+
+      # The message type is migrated from jme-simple-test-event to jme-simple-test-event-v2 and is therefore
+      # consumed from both topics during the migration
+      - type: JmeSimpleTestEvent
+        topics:
+          - jme-simple-test-event
+          - jme-simple-test-event-v2
+        contextIdExtractor: ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestContextIdExtractor
+        releaseCondition:
+          predecessor: JmeDeclarationCreatedEvent
+
+  - name: UnrelatedEvent
+    retentionPeriod: 24h
+    messages:
+      - type: JmeEnumTestEvent
+        contextIdExtractor: ch.admin.bit.jeap.messaging.sequentialinbox.integrationtest.message.TestContextIdExtractor

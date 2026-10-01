@@ -15,7 +15,8 @@ idempotent delivery.
 * Per-message `contextIdExtractor`, optional `messageFilter` (bypass sequencing) and `subTypeResolver`
 * Retention, housekeeping and metrics for sequence instances and buffered messages
 * DevOps operations (force-consume, expire, close) via pending actions and an optional REST API
-* Multi-cluster Kafka consumption and recording-mode migration for introducing a sequence on a live topic
+* Multi-cluster and multi-topic Kafka consumption, allowing a message type to be consumed from several topics during a topic migration
+* Recording-mode migration for introducing a sequence on a live topic
 
 ## Documentation
 
@@ -27,6 +28,7 @@ Start with [Getting started](docs/getting-started.md), then follow the links bel
 | How sequencing works (buffering & release flow)              | [docs/how-it-works.md](docs/how-it-works.md)                               |
 | Selective recording when introducing a sequence on live topics | [Recording rollout](docs/how-it-works.md#recording-mode-migrating-a-live-topic) |
 | Sequence declaration reference (`jeap-sequential-inbox.yml`) | [docs/sequence-declaration.md](docs/sequence-declaration.md)               |
+| Consuming a message type from several topics (topic migration) | [Several topics per message type](docs/sequence-declaration.md#consuming-a-message-type-from-several-topics) |
 | Configuration reference (`jeap.messaging.sequential-inbox.*`)| [docs/configuration.md](docs/configuration.md)                             |
 | Housekeeping, retention & metrics                            | [docs/housekeeping-and-metrics.md](docs/housekeeping-and-metrics.md)       |
 | DevOps operations (pending actions & REST API)               | [docs/devops-operations.md](docs/devops-operations.md)                     |
