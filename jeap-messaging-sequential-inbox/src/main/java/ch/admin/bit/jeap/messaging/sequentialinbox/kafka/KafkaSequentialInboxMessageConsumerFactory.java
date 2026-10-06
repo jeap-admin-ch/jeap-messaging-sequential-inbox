@@ -50,6 +50,14 @@ public class KafkaSequentialInboxMessageConsumerFactory {
     }
 
     /**
+     * Starts a consumer for a single topic, retaining the API available before multi-topic support.
+     * A null, empty or whitespace-only topic selects the message type's default topic.
+     */
+    public void startConsumer(String topicName, String messageType, String clusterName, SequentialInboxMessageHandler messageHandler) {
+        startConsumer(StringUtils.hasText(topicName) ? List.of(topicName) : List.of(), messageType, clusterName, messageHandler);
+    }
+
+    /**
      * Starts one consumer per topic for the given message type. A message type can be consumed from more than one
      * topic, i.e. while migrating a message type from one topic to another one.
      *
