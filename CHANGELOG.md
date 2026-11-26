@@ -15,6 +15,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `server.forward-headers-strategy=NATIVE`), and only if the application sets neither of the two properties itself,
   so an application's own setting of either property is respected (Spring Boot refuses to start if both are set).
   The `server.tomcat.use-relative-redirects=true` default was dropped, as Spring Boot defaults to relative redirects.
+- update jeap-messaging from 19.36.0 to 19.37.0
+- update jeap-spring-boot-roles-anywhere-starter from 3.72.0 to 3.73.0
+- update jeap-crypto from 11.34.0 to 11.35.0
+- update jeap-spring-boot-vault-starter from 25.34.0 to 25.35.0
 
 ## [22.32.0] - 2026-11-21
 
